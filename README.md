@@ -136,17 +136,11 @@ Jenkins Ci 설정 지침 단계에 따라 구성
 
 ![alt text](image-1.png)
 
-<aside>
-💡 **플러그인 관리 → kubernetes, slack notification 설치**
-</aside>
+<aside class="warning">💡 **플러그인 관리 → kubernetes, slack notification 설치**</aside>
 
-<aside>
-💡 **시스템 설정 → GitHub Server, slack 연결**
-</aside>
+<aside class="warning">💡 **시스템 설정 → GitHub Server, slack 연결**</aside>
 
-<aside>
-💡 **Node 관리 → Clouds → New Cloud → WebSocket Check**
-</aside>
+<aside class="warning">💡 **Node 관리 → Clouds → New Cloud → WebSocket Check**</aside>
 
 ### Kaniko
 **Docker** : Docker는 Docker 데몬이 호스트 시스템에서 실행되고 이미지를 빌드하는 데몬 기반 접근 방식을 사용합니다. 이를 위해서는 특히 Kubernetes 클러스터에서 보안 문제가 될 수 있는 권한 있는 액세스가 필요합니다.
@@ -178,13 +172,9 @@ kubectl apply -f RnR/kaniko/.
 
 ### Pipeline
 **Configuration**
-<aside>
-💡 check : **Do not allow the pipeline to resume if the controller restarts**
-</aside>
+<aside class="warning">💡 check : **Do not allow the pipeline to resume if the controller restarts**</aside>
 
-<aside>
-💡 check : **GitHub hook trigger for GITScm polling**
-</aside>
+<aside  class="warning">💡 check : **GitHub hook trigger for GITScm polling**</aside>
 
 **Json**
 ```
@@ -306,4 +296,4 @@ podTemplate(yaml: '''
     }
 }
 ```
-```
+
