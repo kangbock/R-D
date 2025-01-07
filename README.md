@@ -1,8 +1,10 @@
 # CI/CD와 PLG 실습 과정
 
 ## Azure Login
+<br>
 
 **Azure VM (Ubuntu 22.04)**
+<br>
 ```
 sudo apt update 
 sudo apt-get upgrade -y
@@ -16,15 +18,16 @@ az aks get-credentials --resource-group poc-rg --name poc-test-aks
 ```
 
 **Helm Install**
+<br>
 ```
 curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
 chmod 700 get_helm.sh
 ./get_helm.sh
 ```
-
-
+<br><br>
 
 ## Cert-manager
+<br>
 ```
 kubectl create namespace cert-manager
 
@@ -41,8 +44,6 @@ helm install cert-manager jetstack/cert-manager \
   --set installCRDs=true \
   --set nodeSelector."kubernetes\.io/os"=linux
 ```
-
-
 
 ## Harbor
 ```
@@ -88,8 +89,6 @@ helm install harbor -f ./harbor/values.yaml ./harbor/. -n devops-tools
 kubectl apply -f cert-manager/.
 ```
 
-
-
 ## Istio
 
 **Isito Download**
@@ -120,8 +119,6 @@ kubectl get namespace -L istio-injection
 ```
 istioctl experimental check-inject <pod-name>
 ```
-
-
 
 ## Jenkins
 **Workflow**
