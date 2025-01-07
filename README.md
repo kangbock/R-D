@@ -517,7 +517,7 @@ kubectl delete crd scrapeconfigs.monitoring.coreos.com
 kubectl delete crd servicemonitors.monitoring.coreos.com
 kubectl delete crd thanosrulers.monitoring.coreos.com
 ```
-<br><br>
+<br>
 
 ### Alertmanager
 **Helm Chart Value.yaml**
@@ -581,7 +581,8 @@ kubectl apply -f RnR/alertmanager/.
 ```
 <br>
 
-**Slack Notification**
+**Slack Notification**<br>
+
 ![alt text](image-4.png)
 <br><br>
 
