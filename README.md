@@ -1,10 +1,8 @@
 # CI/CD와 PLG 실습 과정
 
 ## Azure Login
-<br>
 
 **Azure VM (Ubuntu 22.04)**
-<br>
 ```
 sudo apt update 
 sudo apt-get upgrade -y
@@ -16,9 +14,9 @@ az account set --subscription kblee_cc1_gp_mpn_2-cloudsecurity-02
 az aks install-cli
 az aks get-credentials --resource-group poc-rg --name poc-test-aks
 ```
+<br>
 
 **Helm Install**
-<br>
 ```
 curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
 chmod 700 get_helm.sh
@@ -28,6 +26,7 @@ chmod 700 get_helm.sh
 
 ## Cert-manager
 <br>
+
 ```
 kubectl create namespace cert-manager
 
@@ -44,6 +43,7 @@ helm install cert-manager jetstack/cert-manager \
   --set installCRDs=true \
   --set nodeSelector."kubernetes\.io/os"=linux
 ```
+<br><br>
 
 ## Harbor
 ```
@@ -51,6 +51,7 @@ kubectl create ns devops-tools
 kubectl apply -f RnR/harbor/harbor-certificate.yaml
 kubectl get nodes --show-labels | grep linux
 ```
+<br>
 
 **Harbor Deploy**
 ```
@@ -83,11 +84,13 @@ helm install harbor -f ./harbor/values.yaml ./harbor/. -n devops-tools
 # ID : admin
 # PW : Harbor12345
 ```
+<br>
 
 **Cluster Issuer**
 ```
 kubectl apply -f cert-manager/.
 ```
+<br><br>
 
 ## Istio
 
@@ -99,12 +102,14 @@ cd istio
 export PATH=$PWD/bin:$PATH
 cd ..
 ```
+<br>
 
 **Istio Deploy**
 ```
 istioctl install --set profile=default -y
 # istioctl install --set profile=demo --skip-confirmation
 ```
+<br>
 
 **auto sidecar injection**
 ```
@@ -114,25 +119,31 @@ kubectl label namespace monitoring istio-injection=enabled --overwrite
 
 kubectl get namespace -L istio-injection
 ```
+<br>
 
 **sidecar check**
 ```
 istioctl experimental check-inject <pod-name>
 ```
+<br><br>
 
 ## Jenkins
+
 **Workflow**
 ![alt text](image.png)
+<br>
 
 **Deploy**
 ```
 kubectl apply -f RnR/jenkins/.
 ```
+<br>
 
 **Password**
 ```
 kubectl exec -it svc/jenkins-service -n devops-tools -- cat /var/jenkins_home/secrets/initialAdminPassword
 ```
+<br>
 
 ### Slack Notification
 
@@ -151,6 +162,7 @@ Jenkins Ci 설정 지침 단계에 따라 구성
 **Docker** : Docker는 Docker 데몬이 호스트 시스템에서 실행되고 이미지를 빌드하는 데몬 기반 접근 방식을 사용합니다. 이를 위해서는 특히 Kubernetes 클러스터에서 보안 문제가 될 수 있는 권한 있는 액세스가 필요합니다.
 
 **Kaniko** : Kaniko는 컨테이너 또는 Kubernetes 클러스터 내부의 Dockerfile에서 컨테이너 이미지를 빌드하는 도구입니다. 특별한 권한이 필요하지 않으므로 Kubernetes 환경의 보안이 더욱 강화됩니다.
+<br>
 
 **Create secret**
 ```
@@ -158,6 +170,7 @@ docker login https://harbor.k-tech.cloud
 cat ~/.docker/config.json
 cat ~/.docker/config.json | base64
 ```
+<br>
 
 **regcred.yaml**
 ```
@@ -174,6 +187,7 @@ type: kubernetes.io/dockerconfigjson
 ```
 kubectl apply -f RnR/kaniko/.
 ```
+<br>
 
 ### Pipeline
 **Configuration**
@@ -301,4 +315,5 @@ podTemplate(yaml: '''
     }
 }
 ```
+<br>
 
