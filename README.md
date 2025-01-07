@@ -195,7 +195,7 @@ kubectl apply -f RnR/kaniko/.
 
 <aside  class="warning">💡 check : GitHub hook trigger for GITScm polling</aside><br>
 
-**Json**
+**Frontend**
 ```
 podTemplate(yaml: '''
     apiVersion: v1
@@ -317,3 +317,142 @@ podTemplate(yaml: '''
 ```
 <br>
 
+**Backend (Login)**
+```
+podTemplate(yaml: '''
+    apiVersion: v1
+    kind: Pod
+    metadata:
+      name: login
+    spec:
+      containers:
+      - name: alpine
+        image: alpine/git:latest
+        command:
+        - sleep
+        args:
+        - 99d
+      - name: kaniko
+        image: gcr.io/kaniko-project/executor:debug
+        command:
+        - sleep
+        args:
+        - 99d
+        volumeMounts:
+        - name: kaniko-secret
+          mountPath: /kaniko/.docker
+      restartPolicy: Never
+      volumes:
+      - name: kaniko-secret
+        secret:
+          secretName: docker-config-secret
+          items:
+            - key: .dockerconfigjson
+              path: config.json
+''') {
+
+    node(POD_LABEL) {
+        try {
+            stage("Set Variable") {
+                git url: 'https://github.com/kangbock/msa_loginjs.git', branch: 'main'
+                script(){
+                    env.GIT_COMMIT = sh(script: "git rev-parse HEAD", returnStdout: true).trim()
+                    GIT_TAG = sh (script: 'git describe --always', returnStdout: true).trim();
+                    SLACK_CHANNEL = "#devops";
+                    SLACK_SUCCESS_COLOR = "#2C953C";
+                    SLACK_FAIL_COLOR = "#FF3232";
+                    // Git Commit 계정
+                    GIT_COMMIT_AUTHOR = sh(script: "git --no-pager show -s --format=%an ${env.GIT_COMMIT}", returnStdout: true).trim();
+                    // Git Commit 메시지
+                    GIT_COMMIT_MESSAGE = sh(script: "git --no-pager show -s --format=%B ${env.GIT_COMMIT}", returnStdout: true).trim();
+                }
+            }
+            slackSend (
+                channel: SLACK_CHANNEL,
+                color: SLACK_SUCCESS_COLOR,
+                message: "========================================\n The ${env.JOB_NAME}(${env.BUILD_NUMBER}) pipeline has started.\n\n          Author : ${GIT_COMMIT_AUTHOR} \n          Commit Message : ${GIT_COMMIT_MESSAGE}\n\n${env.BUILD_URL}"
+            )
+        } catch(git) {
+                slackSend (
+                    channel: SLACK_CHANNEL,
+                    color: SLACK_SUCCESS_COLOR,
+                    message: "========================================\n${env.JOB_NAME}(${env.BUILD_NUMBER}) pipeline failed.\n\n          Author : ${GIT_COMMIT_AUTHOR} \n          Commit Message : ${GIT_COMMIT_MESSAGE}\n\n${env.BUILD_URL}"
+                )
+            throw git;
+        }
+        
+
+        stage('Kaniko Build and Push') {
+            git url: 'https://github.com/kangbock/msa_loginjs.git', branch: 'main'
+            
+            container('kaniko') {
+                try {
+                    stage('login') {
+                        sh '/kaniko/executor -f `pwd`/Dockerfile -c `pwd` --insecure --cache=true --destination=harbor.k-tech.cloud/msa/login_js:${BUILD_NUMBER}'
+                    }
+                    slackSend (
+                        channel: SLACK_CHANNEL,
+                        color: SLACK_SUCCESS_COLOR,
+                        message: "LOGIN Image Deployment and Push Successfully."
+                    )
+                } catch(Build) {
+                    slackSend (
+                        channel: SLACK_CHANNEL,
+                        color: SLACK_FAIL_COLOR,
+                        message: "Image deployment and push failed."
+                    )
+                    throw Build;
+                }
+            }
+            
+            git url: 'https://github.com/kangbock/msa_deploy.git', branch: 'main'
+            container('alpine') {
+                try {
+                    stage('GitHub Push') {
+                        sh 'sed -i s/login_js:.*/login_js:${BUILD_NUMBER}/g ./login_js.yaml'
+		                    sh 'git config --global --add safe.directory /home/jenkins/agent/workspace/login'
+		                    sh 'git config --global user.email \'kangbock@naver.com\''
+		                    sh 'git config --global user.name \'kangbock\''
+		                    sh 'git config --global --add safe.directory /home/jenkins/agent/workspace/main'
+		                    sh 'git add ./'
+		                    sh 'git commit -a -m "updated the image tag to ${BUILD_NUMBER}" || true'
+		                    sh 'git remote add kb97 https://<GIT_TOKEN>@github.com/kangbock/msa_deploy.git'
+		                    sh 'git push -u kb97 main'
+                    }
+                    slackSend (
+                        channel: SLACK_CHANNEL,
+                        color: SLACK_SUCCESS_COLOR,
+                        message: "Deployment was successful.\n========================================"
+                    )
+                } catch(push) {
+                    slackSend (
+                        channel: SLACK_CHANNEL,
+                        color: SLACK_FAIL_COLOR,
+                        message: "Deployment failed.\n========================================"
+                    )
+                    throw push;
+                }
+            }
+        }
+    }
+}
+```
+<br><br>
+
+## ArgoCD
+
+**ArgoCD Deploy**
+```
+kubectl create namespace argocd
+kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+kubectl apply -f RnR/argocd/.
+```
+<br>
+
+```
+# 암호 찾기
+kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d; echo
+```
+<br><br>
+
+## Prometheus
