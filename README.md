@@ -139,6 +139,27 @@ kubectl get namespace -L istio-injection
 ```
 istioctl experimental check-inject <pod-name>
 ```
+<br>
+
+### Kiali
+
+**kiali.yaml**
+```
+data:
+  config.yaml: |
+    external_services:
+      prometheus:
+        custom_metrics_url: http://kube-prometheus-stack-prometheus.monitoring:9090
+        url: http://kube-prometheus-stack-prometheus.monitoring:9090
+      grafana:
+        custom_metrics_url: http://kube-prometheus-stack-grafana.monitoring:80
+        url: http://kube-prometheus-stack-grafana.monitoring:80
+```
+<br>
+```
+kubectl apply -f istio/samples/addons/kiali.yaml
+kubectl apply -f RnR/kiali/.
+```
 <br><br>
 
 ## Jenkins
@@ -466,3 +487,112 @@ kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.pas
 <br><br>
 
 ## Prometheus
+### Prometheus Stack
+```
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm repo update
+git clone https://github.com/prometheus-community/helm-charts.git
+```
+<br>
+
+```
+helm install kube-prometheus-stack prometheus-community/kube-prometheus-stack --debug --timeout 10m -n monitoring
+kubectl apply -f RnR/prometheus/.
+```
+<br>
+
+**Uninstall Command**
+```
+helm uninstall prometheus
+kubectl delete crd alertmanagerconfigs.monitoring.coreos.com
+kubectl delete crd alertmanagers.monitoring.coreos.com
+kubectl delete crd podmonitors.monitoring.coreos.com
+kubectl delete crd probes.monitoring.coreos.com
+kubectl delete crd prometheusagents.monitoring.coreos.com
+kubectl delete crd prometheuses.monitoring.coreos.com
+kubectl delete crd prometheusrules.monitoring.coreos.com
+kubectl delete crd scrapeconfigs.monitoring.coreos.com
+kubectl delete crd servicemonitors.monitoring.coreos.com
+kubectl delete crd thanosrulers.monitoring.coreos.com
+```
+<br><br>
+
+### Alertmanager
+**Helm Chart Value.yaml**
+```
+alertmanager:
+  config:
+    global:
+      resolve_timeout: 5m
+      slack_api_url: '<WEBHOOK_URL>'
+      http_config:
+        follow_redirects: true
+    inhibit_rules:
+      - source_matchers:
+          - 'severity = critical'
+        target_matchers:
+          - 'severity =~ warning|info'
+        equal:
+          - 'namespace'
+          - 'alertname'
+      - source_matchers:
+          - 'severity = warning'
+        target_matchers:
+          - 'severity = info'
+        equal:
+          - 'namespace'
+          - 'alertname'
+      - source_matchers:
+          - 'alertname = InfoInhibitor'
+        target_matchers:
+          - 'severity = info'
+        equal:
+          - 'namespace'
+      - target_matchers:
+          - 'alertname = InfoInhibitor'
+    route:
+      group_by: ['job']
+      group_wait: 30s
+      group_interval: 5m
+      repeat_interval: 12h
+      receiver: 'slack-notifications'
+      routes:
+      - receiver: 'slack-notifications'
+        matchers:
+          - alertname =~ "InfoInhibitor|Watchdog"
+    receivers:
+    - name: 'slack-notifications'
+      slack_configs:
+      - channel: '#devops'
+        api_url: '<WEBHOOK_URL>'
+        username: 'alertmanager'
+        title_link: 'http://alertmanager.k-tech.cloud/#/alerts?receiver=slack-notifications'
+        text: "<!channel>\n\n*Alert Details:*\n- *Status*: {{ .Status }}\n- *Instance*: {{ .CommonLabels.instance }}\n- *Severity*: {{ .CommonLabels.severity }}\n- *Description*: {{ .CommonAnnotations.description }}\n- *Summary*: {{ .CommonAnnotations.summary }}\n\n*Triggered Labels:*\n{{ range .CommonLabels.SortedPairs }}- *{{ .Name }}*: {{ .Value }}\n{{ end }}\n\n*Alert Start Time*: {{ range .Alerts }}{{ .StartsAt }}{{ end }}\n\n{{ if .Alerts.Resolved }}*Alert Resolved Time*: {{ range .Alerts }}{{ .EndsAt }}{{ end }}{{ end }}"
+        send_resolved: true
+```
+<br>
+
+**Prometheus Stack Update**
+```
+helm upgrade --install kube-prometheus-stack prometheus-community/kube-prometheus-stack -n monitoring -f helm-charts/charts/kube-prometheus-stack/values.yaml
+kubectl apply -f RnR/alertmanager/.
+```
+<br>
+
+**Slack Notification**
+![alt text](image-4.png)
+<br><br>
+
+## Grafana
+```
+kubectl apply -f RnR/grafana/.
+```
+<br>
+
+**Grafana admin password**
+```
+kubectl get secret --namespace monitoring kube-prometheus-stack-grafana -o jsonpath="{.data.admin-password}" | base64 --decode ; echo
+```
+<br><br>
+
+## Loki
