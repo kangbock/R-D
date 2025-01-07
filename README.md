@@ -134,25 +134,176 @@ kubectl exec -it svc/jenkins-service -n devops-tools -- cat /var/jenkins_home/se
 **https://워크스페이스.slack.com/apps** 에 접속하여 **Jenkins Ci 앱** 설치
 Jenkins Ci 설정 지침 단계에 따라 구성
 
-![image.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/dc549f44-70b8-4ccc-93b8-1624c27072f8/b3800203-1b92-4e54-8847-a132e993c307/image.png)
+![alt text](image-1.png)
 
 <aside>
 💡 **플러그인 관리 → kubernetes, slack notification 설치**
-
 </aside>
 
 <aside>
 💡 **시스템 설정 → GitHub Server, slack 연결**
-
 </aside>
 
 <aside>
 💡 **Node 관리 → Clouds → New Cloud → WebSocket Check**
-
 </aside>
 
-## Kaniko
+### Kaniko
 **Docker** : Docker는 Docker 데몬이 호스트 시스템에서 실행되고 이미지를 빌드하는 데몬 기반 접근 방식을 사용합니다. 이를 위해서는 특히 Kubernetes 클러스터에서 보안 문제가 될 수 있는 권한 있는 액세스가 필요합니다.
 
 **Kaniko** : Kaniko는 컨테이너 또는 Kubernetes 클러스터 내부의 Dockerfile에서 컨테이너 이미지를 빌드하는 도구입니다. 특별한 권한이 필요하지 않으므로 Kubernetes 환경의 보안이 더욱 강화됩니다.
 
+**Create secret**
+```
+docker login https://harbor.k-tech.cloud
+cat ~/.docker/config.json
+cat ~/.docker/config.json | base64
+```
+
+**regcred.yaml**
+```
+apiVersion: v1
+kind: Secret
+metadata:
+  name: docker-config-secret
+  namespace: devops-tools
+data:
+  .dockerconfigjson: 인코딩한 데이터
+type: kubernetes.io/dockerconfigjson
+```
+
+```
+kubectl apply -f RnR/kaniko/.
+```
+
+### Pipeline
+**Configuration**
+<aside>
+💡 check : **Do not allow the pipeline to resume if the controller restarts**
+</aside>
+
+<aside>
+💡 check : **GitHub hook trigger for GITScm polling**
+</aside>
+
+**Json**
+```
+podTemplate(yaml: '''
+    apiVersion: v1
+    kind: Pod
+    metadata:
+      name: nginx
+    spec:
+      containers:
+      - name: alpine
+        image: alpine/git:latest
+        command:
+        - sleep
+        args:
+        - 99d
+      - name: kaniko
+        image: gcr.io/kaniko-project/executor:debug
+        command:
+        - sleep
+        args:
+        - 99d
+        volumeMounts:
+        - name: kaniko-secret
+          mountPath: /kaniko/.docker
+      restartPolicy: Never
+      volumes:
+      - name: kaniko-secret
+        secret:
+          secretName: docker-config-secret
+          items:
+            - key: .dockerconfigjson
+              path: config.json
+''') {
+
+    node(POD_LABEL) {
+        try {
+            stage("Set Variable") {
+                git url: 'https://github.com/kangbock/msa_nginx.git', branch: 'main'
+                script(){
+                    env.GIT_COMMIT = sh(script: "git rev-parse HEAD", returnStdout: true).trim()
+                    GIT_TAG = sh (script: 'git describe --always', returnStdout: true).trim();
+                    SLACK_CHANNEL = "#devops";
+                    SLACK_SUCCESS_COLOR = "#2C953C";
+                    SLACK_FAIL_COLOR = "#FF3232";
+                    // Git Commit 계정
+                    GIT_COMMIT_AUTHOR = sh(script: "git --no-pager show -s --format=%an ${env.GIT_COMMIT}", returnStdout: true).trim();
+                    // Git Commit 메시지
+                    GIT_COMMIT_MESSAGE = sh(script: "git --no-pager show -s --format=%B ${env.GIT_COMMIT}", returnStdout: true).trim();
+                }
+            }
+            slackSend (
+                channel: SLACK_CHANNEL,
+                color: SLACK_SUCCESS_COLOR,
+                message: "========================================\n The ${env.JOB_NAME}(${env.BUILD_NUMBER}) pipeline has started.\n\n          Author : ${GIT_COMMIT_AUTHOR} \n          Commit Message : ${GIT_COMMIT_MESSAGE}\n\n${env.BUILD_URL}"
+            )
+        } catch(git) {
+                slackSend (
+                    channel: SLACK_CHANNEL,
+                    color: SLACK_SUCCESS_COLOR,
+                    message: "========================================\n${env.JOB_NAME}(${env.BUILD_NUMBER}) pipeline failed.\n\n          Author : ${GIT_COMMIT_AUTHOR} \n          Commit Message : ${GIT_COMMIT_MESSAGE}\n\n${env.BUILD_URL}"
+                )
+            throw git;
+        }
+        
+
+        stage('Kaniko Build and Push') {
+            git url: 'https://github.com/kangbock/msa_nginx.git', branch: 'main'
+            
+            container('kaniko') {
+                try {
+                    stage('nginx') {
+                        sh '/kaniko/executor -f `pwd`/Dockerfile -c `pwd` --insecure --cache=true --destination=harbor.k-tech.cloud/msa/nginx:${BUILD_NUMBER}'
+                    }
+                    slackSend (
+                        channel: SLACK_CHANNEL,
+                        color: SLACK_SUCCESS_COLOR,
+                        message: "NGINX Image Deployment and Push Successfully."
+                    )
+                } catch(Build) {
+                    slackSend (
+                        channel: SLACK_CHANNEL,
+                        color: SLACK_FAIL_COLOR,
+                        message: "Image deployment and push failed."
+                    )
+                    throw Build;
+                }
+            }
+            
+            git url: 'https://github.com/kangbock/msa_deploy.git', branch: 'main'
+            container('alpine') {
+                try {
+                    stage('GitHub Push') {
+                        sh 'sed -i s/nginx:.*/nginx:${BUILD_NUMBER}/g ./nginx.yaml'
+		                    sh 'git config --global --add safe.directory /home/jenkins/agent/workspace/nginx'
+		                    sh 'git config --global user.email \'kangbock@naver.com\''
+		                    sh 'git config --global user.name \'kangbock\''
+		                    sh 'git config --global --add safe.directory /home/jenkins/agent/workspace/main'
+		                    sh 'git add ./'
+		                    sh 'git commit -a -m "updated the image tag to ${BUILD_NUMBER}" || true'
+		                    sh 'git remote add kb97 https://<GIT_TOKEN>@github.com/kangbock/msa_deploy.git'
+		                    sh 'git push -u kb97 main'
+                    }
+                    slackSend (
+                        channel: SLACK_CHANNEL,
+                        color: SLACK_SUCCESS_COLOR,
+                        message: "Deployment was successful.\n========================================"
+                    )
+                } catch(push) {
+                    slackSend (
+                        channel: SLACK_CHANNEL,
+                        color: SLACK_FAIL_COLOR,
+                        message: "Deployment failed.\n========================================"
+                    )
+                    throw push;
+                }
+            }
+        }
+    }
+}
+```
+```
