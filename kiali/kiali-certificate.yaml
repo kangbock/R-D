@@ -1,0 +1,19 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: dashboard-secret
+  namespace: istio-system
+spec:
+  secretName: dashboard-secret
+  privateKey:
+    rotationPolicy: Always
+  commonName: dashboard.k-tech.cloud
+  dnsNames:
+    - dashboard.k-tech.cloud
+  usages:
+    - digital signature
+    - key encipherment
+    - server auth
+  issuerRef:
+    name: letsencrypt
+    kind: ClusterIssuer

@@ -1,0 +1,19 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: grafana-secret
+  namespace: monitoring
+spec:
+  secretName: grafana-secret
+  privateKey:
+    rotationPolicy: Always
+  commonName: grafana.k-tech.cloud
+  dnsNames:
+    - grafana.k-tech.cloud
+  usages:
+    - digital signature
+    - key encipherment
+    - server auth
+  issuerRef:
+    name: letsencrypt
+    kind: ClusterIssuer

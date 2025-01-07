@@ -1,0 +1,18 @@
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt2
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    email: kangbock0827@naver.com
+    privateKeySecretRef:
+      name: letsencrypt2
+    solvers:
+    - http01:
+        ingress:
+          class: istio
+          podTemplate:
+            spec:
+              nodeSelector:
+                "kubernetes.io/os": linux

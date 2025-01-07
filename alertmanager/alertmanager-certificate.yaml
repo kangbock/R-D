@@ -1,0 +1,20 @@
+# certificate.yaml
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: alertmanager-secret
+  namespace: monitoring
+spec:
+  secretName: alertmanager-secret
+  privateKey:
+    rotationPolicy: Always
+  commonName: alertmanager.k-tech.cloud
+  dnsNames:
+    - alertmanager.k-tech.cloud
+  usages:
+    - digital signature
+    - key encipherment
+    - server auth
+  issuerRef:
+    name: letsencrypt
+    kind: ClusterIssuer

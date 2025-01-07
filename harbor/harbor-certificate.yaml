@@ -1,0 +1,19 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: harbor-secret
+  namespace: devops-tools
+spec:
+  secretName: harbor-secret
+  privateKey:
+    rotationPolicy: Always
+  commonName: harbor.k-tech.cloud
+  dnsNames:
+    - harbor.k-tech.cloud
+  usages:
+    - digital signature
+    - key encipherment
+    - server auth
+  issuerRef:
+    name: letsencrypt
+    kind: ClusterIssuer

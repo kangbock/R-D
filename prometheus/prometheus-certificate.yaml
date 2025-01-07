@@ -1,0 +1,20 @@
+# certificate.yaml
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: prometheus-secret
+  namespace: monitoring
+spec:
+  secretName: prometheus-secret
+  privateKey:
+    rotationPolicy: Always
+  commonName: prometheus.k-tech.cloud
+  dnsNames:
+    - prometheus.k-tech.cloud
+  usages:
+    - digital signature
+    - key encipherment
+    - server auth
+  issuerRef:
+    name: letsencrypt
+    kind: ClusterIssuer
