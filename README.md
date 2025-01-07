@@ -12,6 +12,7 @@
 
 **Grafana Loki Workflow**
 ![alt text](image-3.png)
+<br><br>
 
 ## Azure Login
 
