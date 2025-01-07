@@ -22,6 +22,8 @@ chmod 700 get_helm.sh
 ./get_helm.sh
 ```
 
+
+
 ## Cert-manager
 ```
 kubectl create namespace cert-manager
@@ -39,6 +41,8 @@ helm install cert-manager jetstack/cert-manager \
   --set installCRDs=true \
   --set nodeSelector."kubernetes\.io/os"=linux
 ```
+
+
 
 ## Harbor
 ```
@@ -84,6 +88,8 @@ helm install harbor -f ./harbor/values.yaml ./harbor/. -n devops-tools
 kubectl apply -f cert-manager/.
 ```
 
+
+
 ## Istio
 
 **Isito Download**
@@ -115,6 +121,8 @@ kubectl get namespace -L istio-injection
 istioctl experimental check-inject <pod-name>
 ```
 
+
+
 ## Jenkins
 **Workflow**
 ![alt text](image.png)
@@ -136,11 +144,11 @@ Jenkins Ci 설정 지침 단계에 따라 구성
 
 ![alt text](image-1.png)
 
-<aside class="warning">💡 **플러그인 관리 → kubernetes, slack notification 설치**</aside>><br>
+<aside class="warning">💡 플러그인 관리 → kubernetes, slack notification 설치</aside><br>
 
-<aside class="warning">💡 **시스템 설정 → GitHub Server, slack 연결**</aside><br>
+<aside class="warning">💡 시스템 설정 → GitHub Server, slack 연결</aside><br>
 
-<aside class="warning">💡 **Node 관리 → Clouds → New Cloud → WebSocket Check**</aside><br>
+<aside class="warning">💡 Node 관리 → Clouds → New Cloud → WebSocket Check</aside><br>
 
 ### Kaniko
 **Docker** : Docker는 Docker 데몬이 호스트 시스템에서 실행되고 이미지를 빌드하는 데몬 기반 접근 방식을 사용합니다. 이를 위해서는 특히 Kubernetes 클러스터에서 보안 문제가 될 수 있는 권한 있는 액세스가 필요합니다.
@@ -172,9 +180,9 @@ kubectl apply -f RnR/kaniko/.
 
 ### Pipeline
 **Configuration**
-<aside class="warning">💡 check : **Do not allow the pipeline to resume if the controller restarts**</aside><br>
+<aside class="warning">💡 check : Do not allow the pipeline to resume if the controller restarts</aside><br>
 
-<aside  class="warning">💡 check : **GitHub hook trigger for GITScm polling**</aside><br>
+<aside  class="warning">💡 check : GitHub hook trigger for GITScm polling</aside><br>
 
 **Json**
 ```
