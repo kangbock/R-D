@@ -1,5 +1,18 @@
 # CI/CD와 PLG 실습 과정
 
+## CI/CD 
+**Workflow**
+![alt text](image.png)
+<br><br>
+
+## PLG
+**Prometheus Workflow**
+![alt text](image-2.png)
+<br>
+
+**Grafana Loki Workflow**
+![alt text](image-3.png)
+
 ## Azure Login
 
 **Azure VM (Ubuntu 22.04)**
@@ -128,10 +141,6 @@ istioctl experimental check-inject <pod-name>
 <br><br>
 
 ## Jenkins
-
-**Workflow**
-![alt text](image.png)
-<br>
 
 **Deploy**
 ```
