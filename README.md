@@ -2,16 +2,16 @@
 
 ## CI/CD 
 **Workflow**
-![alt text](image.png)
+![alt text](img/image.png)
 <br><br>
 
 ## PLG
 **Prometheus Workflow**
-![alt text](image-2.png)
+![alt text](img/image-2.png)
 <br>
 
 **Grafana Loki Workflow**
-![alt text](image-3.png)
+![alt text](img/image-3.png)
 <br><br>
 
 ## Azure Login
@@ -182,7 +182,7 @@ kubectl exec -it svc/jenkins-service -n devops-tools -- cat /var/jenkins_home/se
 **https://워크스페이스.slack.com/apps** 에 접속하여 **Jenkins Ci 앱** 설치<br>
 Jenkins Ci 설정 지침 단계에 따라 구성
 
-![alt text](image-1.png)
+![alt text](img/image-1.png)
 
 <aside class="warning">💡 플러그인 관리 → kubernetes, slack notification 설치</aside><br>
 
@@ -583,7 +583,7 @@ kubectl apply -f RnR/alertmanager/.
 
 **Slack Notification**<br>
 
-![alt text](image-4.png)
+![alt text](img/image-4.png)
 <br><br>
 
 ## Grafana
