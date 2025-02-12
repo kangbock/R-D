@@ -67,6 +67,12 @@ kubectl get nodes --show-labels | grep linux
 ```
 <br>
 
+**Cluster Issuer**
+```
+kubectl apply -f cert-manager/.
+```
+<br>
+
 **Harbor Deploy**
 ```
 # nginx ingress controller install
@@ -98,12 +104,6 @@ helm install harbor -f ./harbor/values.yaml ./harbor/. -n devops-tools
 # ID : admin
 # PW : Harbor12345
 ```
-<br>
-
-**Cluster Issuer**
-```
-kubectl apply -f cert-manager/.
-```
 <br><br>
 
 ## Istio
@@ -111,7 +111,7 @@ kubectl apply -f cert-manager/.
 **Isito Download**
 ```
 curl -L https://istio.io/downloadIstio | sh -
-mv istio-1.24.1 istio
+mv istio-1.24.2 istio
 cd istio
 export PATH=$PWD/bin:$PATH
 cd ..
@@ -120,7 +120,7 @@ cd ..
 
 **Istio Deploy**
 ```
-istioctl install --set profile=default -y
+istioctl install --set profile=demo -y
 # istioctl install --set profile=demo --skip-confirmation
 ```
 <br>
@@ -211,7 +211,7 @@ apiVersion: v1
 kind: Secret
 metadata:
   name: docker-config-secret
-  namespace: devops-tools
+  namespace: default
 data:
   .dockerconfigjson: 인코딩한 데이터
 type: kubernetes.io/dockerconfigjson
@@ -219,6 +219,8 @@ type: kubernetes.io/dockerconfigjson
 
 ```
 kubectl apply -f RnR/kaniko/.
+kubectl apply -n devops-tools -f RnR/kaniko/.
+kubectl apply -n istio-system -f RnR/kaniko/.
 ```
 <br>
 
