@@ -65,7 +65,7 @@ helm install cert-manager jetstack/cert-manager \
 ## Harbor
 ```
 kubectl create ns devops-tools
-kubectl apply -f RnR/harbor/harbor-certificate.yaml
+kubectl apply -f R-D/harbor/harbor-certificate.yaml
 kubectl get nodes --show-labels | grep linux
 ```
 <br>
@@ -162,7 +162,7 @@ data:
 
 ```
 kubectl apply -f istio/samples/addons/kiali.yaml
-kubectl apply -f RnR/kiali/.
+kubectl apply -f R-D/kiali/.
 ```
 <br><br>
 
@@ -170,7 +170,7 @@ kubectl apply -f RnR/kiali/.
 
 **Deploy**
 ```
-kubectl apply -f RnR/jenkins/.
+kubectl apply -f R-D/jenkins/.
 ```
 <br>
 
@@ -221,9 +221,9 @@ type: kubernetes.io/dockerconfigjson
 ```
 
 ```
-kubectl apply -f RnR/kaniko/.
-kubectl apply -n devops-tools -f RnR/kaniko/.
-kubectl apply -n istio-system -f RnR/kaniko/.
+kubectl apply -f R-D/kaniko/.
+kubectl apply -n devops-tools -f R-D/kaniko/.
+kubectl apply -n istio-system -f R-D/kaniko/.
 ```
 <br>
 
@@ -482,7 +482,7 @@ podTemplate(yaml: '''
 ```
 kubectl create namespace argocd
 kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
-kubectl apply -f RnR/argocd/.
+kubectl apply -f R-D/argocd/.
 ```
 <br>
 
@@ -679,7 +679,7 @@ git clone https://github.com/prometheus-community/helm-charts.git
 
 ```
 helm install kube-prometheus-stack prometheus-community/kube-prometheus-stack --debug --timeout 10m -n monitoring
-kubectl apply -f RnR/prometheus/.
+kubectl apply -f R-D/prometheus/.
 ```
 <br>
 
@@ -757,7 +757,7 @@ alertmanager:
 **Prometheus Stack Update**
 ```
 helm upgrade --install kube-prometheus-stack prometheus-community/kube-prometheus-stack -n monitoring -f helm-charts/charts/kube-prometheus-stack/values.yaml
-kubectl apply -f RnR/alertmanager/.
+kubectl apply -f R-D/alertmanager/.
 ```
 <br>
 
@@ -768,7 +768,7 @@ kubectl apply -f RnR/alertmanager/.
 
 ## Grafana
 ```
-kubectl apply -f RnR/grafana/.
+kubectl apply -f R-D/grafana/.
 ```
 <br>
 
