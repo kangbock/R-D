@@ -1,6 +1,7 @@
 # CI/CD와 PLG 실습 과정
 
-## 
+## 사전 작업
+Terraform 배포
 
 ## CI/CD 
 **Workflow**
