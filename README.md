@@ -475,8 +475,7 @@ podTemplate(yaml: '''
 <br><br>
 
 ## ArgoCD
-
-**ArgoCD Deploy**
+### ArgoCD Deploy
 ```
 kubectl create namespace argocd
 kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
@@ -488,6 +487,181 @@ kubectl apply -f RnR/argocd/.
 # 암호 찾기
 kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d; echo
 ```
+<br><br>
+
+### ArgoCD Notification
+**Create ArgoCD App**
+
+https://api.slack.com/apps
+
+![alt text](img/image-5.png)
+![alt text](img/image-6.png)
+<br>
+
+**OAuth & Permissions Bot Token Scopes Setting**
+
+![alt text](img/image-7.png)
+![alt text](img/image-8.png)
+<br>
+
+**argocd-notifications-secret.yaml**
+```
+apiVersion: v1
+kind: Secret
+metadata:
+  labels:
+    app.kubernetes.io/component: notifications-controller
+    app.kubernetes.io/name: argocd-notifications-controller
+    app.kubernetes.io/part-of: argocd
+  name: argocd-notifications-secret
+  namespace: argocd
+type: Opaque
+stringData:
+  slack-token: <SLACK_TOKEN>
+```
+<br>
+
+**Argocd Notifiaction CM Install**
+```
+kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/notifications_catalog/install.yaml
+```
+<br>
+
+**argocd-notifications-cm.yaml**
+```
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-notifications-cm
+  namespace: argocd
+data:
+  service.slack: |
+    token: $slack-token
+```
+<br>
+
+**argocd-notifications-controller.yaml**
+```
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/component: notifications-controller
+    app.kubernetes.io/name: argocd-notifications-controller
+    app.kubernetes.io/part-of: argocd
+  name: argocd-notifications-controller
+  namespace: argocd
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: argocd-notifications-controller
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: argocd-notifications-controller
+    spec:
+      containers:
+      - args:
+        - /usr/local/bin/argocd-notifications
+        env:
+        - name: SLACK_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: argocd-notifications-secret
+              key: slack-token
+        - name: ARGOCD_NOTIFICATIONS_CONTROLLER_LOGFORMAT
+          valueFrom:
+            configMapKeyRef:
+              key: notificationscontroller.log.format
+              name: argocd-cmd-params-cm
+              optional: true
+        - name: ARGOCD_NOTIFICATIONS_CONTROLLER_LOGLEVEL
+          valueFrom:
+            configMapKeyRef:
+              key: notificationscontroller.log.level
+              name: argocd-cmd-params-cm
+              optional: true
+        - name: ARGOCD_APPLICATION_NAMESPACES
+          valueFrom:
+            configMapKeyRef:
+              key: application.namespaces
+              name: argocd-cmd-params-cm
+              optional: true
+        - name: ARGOCD_NOTIFICATION_CONTROLLER_SELF_SERVICE_NOTIFICATION_ENABLED
+          valueFrom:
+            configMapKeyRef:
+              key: notificationscontroller.selfservice.enabled
+              name: argocd-cmd-params-cm
+              optional: true
+        - name: ARGOCD_NOTIFICATION_CONTROLLER_REPO_SERVER_PLAINTEXT
+          valueFrom:
+            configMapKeyRef:
+              key: notificationscontroller.repo.server.plaintext
+              name: argocd-cmd-params-cm
+              optional: true
+        image: quay.io/argoproj/argocd:v2.14.2
+        imagePullPolicy: Always
+        livenessProbe:
+          tcpSocket:
+            port: 9001
+        name: argocd-notifications-controller
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
+        volumeMounts:
+        - mountPath: /app/config/tls
+          name: tls-certs
+        - mountPath: /app/config/reposerver/tls
+          name: argocd-repo-server-tls
+        workingDir: /app
+      nodeSelector:
+        kubernetes.io/os: linux
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      serviceAccountName: argocd-notifications-controller
+      volumes:
+      - configMap:
+          name: argocd-tls-certs-cm
+        name: tls-certs
+      - name: argocd-repo-server-tls
+        secret:
+          items:
+          - key: tls.crt
+            path: tls.crt
+          - key: tls.key
+            path: tls.key
+          - key: ca.crt
+            path: ca.crt
+          optional: true
+          secretName: argocd-repo-server-tls
+```
+<br>
+
+```
+kubectl edit application -n argocd <application name>
+```
+```
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  annotations:
+    notifications.argoproj.io/subscriptions: |
+      - trigger: [on-created, on-deleted, on-deployed, on-scaling-replica-set, on-rollout-updated, on-rollout-step-completed, on-rollout-aborted, on-analysis-run-failed, on-analysis-run-error, on-health-degraded, on-sync-failed, on-sync-running, on-sync-status-unknown, on-sync-succeeded]
+        destinations:
+          - service: slack
+            recipients: [devops]
+```
+<br><br>
+
+**Slack**
+![alt text](img/image-8.png)
 <br><br>
 
 ## Prometheus
