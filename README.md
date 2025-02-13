@@ -487,7 +487,7 @@ kubectl apply -f RnR/argocd/.
 # 암호 찾기
 kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d; echo
 ```
-<br><br>
+<br>
 
 ### ArgoCD Notification
 **Create ArgoCD App**
@@ -658,9 +658,10 @@ metadata:
           - service: slack
             recipients: [devops]
 ```
-<br><br>
+<br>
 
 **Slack**
+
 ![alt text](img/image-8.png)
 <br><br>
 
