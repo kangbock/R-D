@@ -1,7 +1,8 @@
 # CI/CD와 PLG 실습 과정
 
 ## 사전 작업
-Terraform 으로 인프라 구성
+Terraform 인프라 구성 <br>
+https://github.com/kangbock/terraform-basic
 
 ## CI/CD 
 **Workflow**
