@@ -161,6 +161,9 @@ helm install harbor -f ./harbor/values.yaml ./harbor/. -n devops-tools
 # ID : admin
 # PW : Harbor12345
 ```
+<br>
+
+![alt text](img/image-12.png)
 <br><br>
 
 
@@ -226,9 +229,10 @@ data:
 kubectl apply -f istio/samples/addons/kiali.yaml
 kubectl apply -f R-D/kiali/.
 ```
+<br>
+
+![alt text](img/image-11.png)
 <br><br>
-
-
 
 ## Jenkins
 
@@ -243,6 +247,12 @@ kubectl apply -f R-D/jenkins/.
 kubectl exec -it svc/jenkins-service -n devops-tools -- cat /var/jenkins_home/secrets/initialAdminPassword
 ```
 <br>
+
+<aside class="warning">💡 플러그인 관리 → kubernetes, slack notification 설치</aside><br>
+
+<aside class="warning">💡 시스템 설정 → GitHub Server, slack 연결</aside><br>
+
+<aside class="warning">💡 Node 관리 → Clouds → New Cloud → WebSocket Check</aside><br><br>
 
 ### Kaniko
 
@@ -540,6 +550,9 @@ podTemplate(yaml: '''
     }
 }
 ```
+<br>
+
+![alt text](img/image-13.png)
 <br><br>
 
 ### Slack Notification
@@ -552,13 +565,8 @@ Jenkins Ci 설정 지침 단계에 따라 구성
 
 ![alt text](img/image-1.png)
 
-<aside class="warning">💡 플러그인 관리 → kubernetes, slack notification 설치</aside><br>
-
-<aside class="warning">💡 시스템 설정 → GitHub Server, slack 연결</aside><br>
-
-<aside class="warning">💡 Node 관리 → Clouds → New Cloud → WebSocket Check</aside><br><br>
-
-
+![alt text](img/image-15.png)
+<br><br>
 
 ## ArgoCD
 
@@ -579,6 +587,9 @@ kubectl apply -f R-D/argocd/.
 # 암호 찾기
 kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d; echo
 ```
+<br>
+
+![alt text](img/image-14.png)
 <br>
 
 ### ArgoCD Notification
