@@ -1,6 +1,6 @@
 # CI/CD와 PLG 실습 과정
 
----
+
 
 ## 사전 작업 - Terraform 인프라 구성
 
@@ -9,7 +9,7 @@ Terraform을 사용하여 인프라를 코드로 관리하고 자동화합니다
 - GitHub Repository: [Terraform Basic](https://github.com/kangbock/terraform-basic)
 <br><br>
 
----
+
 
 ## CI/CD 
 
@@ -26,7 +26,7 @@ Terraform을 사용하여 인프라를 코드로 관리하고 자동화합니다
 - Slack으로 상태 알림
 <br><br>
 
----
+
 
 ## PLG
 
@@ -49,7 +49,7 @@ Terraform을 사용하여 인프라를 코드로 관리하고 자동화합니다
 ![alt text](img/image-3.png)
 <br><br>
 
----
+
 
 ## Azure Login
 
@@ -82,7 +82,7 @@ chmod 700 get_helm.sh
 ```
 <br><br>
 
----
+
 
 ## Cert-manager
 
@@ -107,7 +107,7 @@ helm install cert-manager jetstack/cert-manager \
 ```
 <br><br>
 
----
+
 
 ## Harbor
 
@@ -163,7 +163,7 @@ helm install harbor -f ./harbor/values.yaml ./harbor/. -n devops-tools
 ```
 <br><br>
 
----
+
 
 ## Istio Service Mesh
 
@@ -228,7 +228,7 @@ kubectl apply -f R-D/kiali/.
 ```
 <br><br>
 
----
+
 
 ## Jenkins
 
@@ -558,7 +558,7 @@ Jenkins Ci 설정 지침 단계에 따라 구성
 
 <aside class="warning">💡 Node 관리 → Clouds → New Cloud → WebSocket Check</aside><br><br>
 
----
+
 
 ## ArgoCD
 
@@ -761,7 +761,7 @@ metadata:
 ![alt text](img/image-9.png)
 <br><br>
 
----
+
 
 ## Prometheus
 
@@ -869,7 +869,7 @@ kubectl apply -f R-D/alertmanager/.
 
 ## Grafana
 
----
+
 
 메트릭 및 로그 시각화와 분석
 
@@ -890,7 +890,7 @@ kubectl get secret --namespace monitoring kube-prometheus-stack-grafana -o jsonp
 ![alt text](img/image-10.png)
 <br><br>
 
----
+
 
 ## Loki
 
