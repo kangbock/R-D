@@ -1,24 +1,60 @@
 # CI/CD와 PLG 실습 과정
 
-## 사전 작업
-Terraform 인프라 구성 <br>
-https://github.com/kangbock/terraform-basic
+---
 
-## CI/CD 
-**Workflow**
-![alt text](img/image.png)
+## 사전 작업 - Terraform 인프라 구성
+
+Terraform을 사용하여 인프라를 코드로 관리하고 자동화합니다.
+
+- GitHub Repository: [Terraform Basic](https://github.com/kangbock/terraform-basic)
 <br><br>
 
+---
+
+## CI/CD 
+
+지속적 통합과 배포 자동화를 위한 파이프라인을 Jenkins, Kaniko, Harbor, ArgoCD로 구성합니다.
+<br>
+
+**Workflow**
+![alt text](img/image.png)
+<br>
+
+- Jenkins로 소스코드 통합 빌드
+- Kaniko로 Docker 이미지 생성 후 Harbor에 이미지 푸시
+- ArgoCD가 변경된 배포 YAML을 통해 자동 배포 수행
+- Slack으로 상태 알림
+<br><br>
+
+---
+
 ## PLG
-**Prometheus Workflow**
+
+애플리케이션과 인프라의 메트릭 및 로그를 수집하여 관찰성을 높이고 분석합니다.
+<br>
+
+### Prometheus Workflow
+
+메트릭 수집 및 알림 발송
+<br>
+
 ![alt text](img/image-2.png)
 <br>
 
-**Grafana Loki Workflow**
+### Grafana Loki Workflow
+
+로그 수집 및 분석
+<br>
+
 ![alt text](img/image-3.png)
 <br><br>
 
+---
+
 ## Azure Login
+
+Azure VM(Ubuntu)에서 Docker, Azure CLI 및 Kubernetes CLI 설정 및 AKS 연결
+<br>
 
 **Azure VM (Ubuntu 22.04)**
 ```
@@ -35,6 +71,10 @@ az aks get-credentials --resource-group poc-rg --name poc-test-aks
 <br>
 
 **Helm Install**
+
+Helm을 이용하여 Kubernetes 앱 배포 및 관리
+<br>
+
 ```
 curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
 chmod 700 get_helm.sh
@@ -42,7 +82,11 @@ chmod 700 get_helm.sh
 ```
 <br><br>
 
+---
+
 ## Cert-manager
+
+인증서 자동 발급 및 관리 (LetsEncrypt 연동)
 <br>
 
 ```
@@ -63,7 +107,16 @@ helm install cert-manager jetstack/cert-manager \
 ```
 <br><br>
 
+---
+
 ## Harbor
+
+프라이빗 컨테이너 레지스트리 구축
+
+- NGINX Ingress Controller 및 SSL 적용
+- Cert-manager로 자동 인증서 관리
+<br>
+
 ```
 kubectl create ns devops-tools
 kubectl apply -f R-D/harbor/harbor-certificate.yaml
@@ -110,7 +163,15 @@ helm install harbor -f ./harbor/values.yaml ./harbor/. -n devops-tools
 ```
 <br><br>
 
-## Istio
+---
+
+## Istio Service Mesh
+
+서비스 간 통신 보안과 관리
+
+- 자동 사이드카 주입
+- Kiali를 통한 가시성 확보
+<br>
 
 **Isito Download**
 ```
@@ -167,6 +228,8 @@ kubectl apply -f R-D/kiali/.
 ```
 <br><br>
 
+---
+
 ## Jenkins
 
 **Deploy**
@@ -181,20 +244,13 @@ kubectl exec -it svc/jenkins-service -n devops-tools -- cat /var/jenkins_home/se
 ```
 <br>
 
-### Slack Notification
-
-**https://워크스페이스.slack.com/apps** 에 접속하여 **Jenkins Ci 앱** 설치<br>
-Jenkins Ci 설정 지침 단계에 따라 구성
-
-![alt text](img/image-1.png)
-
-<aside class="warning">💡 플러그인 관리 → kubernetes, slack notification 설치</aside><br>
-
-<aside class="warning">💡 시스템 설정 → GitHub Server, slack 연결</aside><br>
-
-<aside class="warning">💡 Node 관리 → Clouds → New Cloud → WebSocket Check</aside><br><br>
-
 ### Kaniko
+
+컨테이너 이미지 빌드를 위한 보안 강화 도구
+
+- Docker 데몬 없이 Kubernetes 내부 빌드 가능
+<br>
+
 #### Docker vs Kaniko
 **Docker** : Docker는 Docker 데몬이 호스트 시스템에서 실행되고 이미지를 빌드하는 데몬 기반 접근 방식을 사용합니다. 이를 위해서는 특히 Kubernetes 클러스터에서 보안 문제가 될 수 있는 권한 있는 액세스가 필요합니다.
 
@@ -228,7 +284,15 @@ kubectl apply -n istio-system -f R-D/kaniko/.
 ```
 <br>
 
-### Pipeline
+### Jenkins Pipeline 구성
+
+CI/CD 자동화를 위한 Jenkins Pipeline
+
+- Kaniko를 이용한 컨테이너 이미지 빌드
+- GitOps를 통한 자동 배포
+- Slack 알림 연동
+<br>
+
 **Configuration**
 <aside class="warning">💡 check : Do not allow the pipeline to resume if the controller restarts</aside><br>
 
@@ -478,7 +542,31 @@ podTemplate(yaml: '''
 ```
 <br><br>
 
+### Slack Notification
+
+Jenkins와 Slack을 연동하여 파이프라인 상태 실시간 알림
+<br>
+
+**https://워크스페이스.slack.com/apps** 에 접속하여 **Jenkins Ci 앱** 설치<br>
+Jenkins Ci 설정 지침 단계에 따라 구성
+
+![alt text](img/image-1.png)
+
+<aside class="warning">💡 플러그인 관리 → kubernetes, slack notification 설치</aside><br>
+
+<aside class="warning">💡 시스템 설정 → GitHub Server, slack 연결</aside><br>
+
+<aside class="warning">💡 Node 관리 → Clouds → New Cloud → WebSocket Check</aside><br><br>
+
+---
+
 ## ArgoCD
+
+GitOps 기반 지속적 배포 관리
+
+- 자동 동기화 및 Slack 알림 연동
+<br>
+
 ### ArgoCD Deploy
 ```
 kubectl create namespace argocd
@@ -494,6 +582,10 @@ kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.pas
 <br>
 
 ### ArgoCD Notification
+
+ArgoCD 상태 변경 시 Slack 알림
+<br>
+
 **Create ArgoCD App**
 
 https://api.slack.com/apps
@@ -669,7 +761,15 @@ metadata:
 ![alt text](img/image-9.png)
 <br><br>
 
+---
+
 ## Prometheus
+
+메트릭 기반 모니터링 및 알림 관리
+
+- 이상 발생 시 Slack 알림
+<br>
+
 ### Prometheus Stack
 ```
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
@@ -768,6 +868,14 @@ kubectl apply -f R-D/alertmanager/.
 <br><br>
 
 ## Grafana
+
+---
+
+메트릭 및 로그 시각화와 분석
+
+- Prometheus 및 Loki 데이터 시각화
+<br>
+
 ```
 kubectl apply -f R-D/grafana/.
 ```
@@ -782,4 +890,9 @@ kubectl get secret --namespace monitoring kube-prometheus-stack-grafana -o jsonp
 ![alt text](img/image-10.png)
 <br><br>
 
+---
+
 ## Loki
+
+중앙 집중식 로그 수집 및 저장, Grafana로 분석
+<br>
