@@ -1,0 +1,13 @@
+apiVersion: networking.istio.io/v1beta1
+kind: ServiceEntry
+metadata:
+  name: azure-mysql
+  namespace: istio-system
+spec:
+  hosts: [ prod-kb97-mysql.mysql.database.azure.com ]
+  ports:
+    - number: 3306
+      name: tcp-mysql
+      protocol: TCP
+  resolution: DNS
+  location: MESH_EXTERNAL
