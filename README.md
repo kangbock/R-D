@@ -924,10 +924,6 @@ helm upgrade -i tempo grafana/tempo-distributed -n observability --create-namesp
 중앙 집중식 로그 수집 및 저장, Grafana로 분석
 <br>
 
-### Loki 흐름
-![alt text](img/image-18.png)
-<br>
-
 - Collector : 모니터링 대상 시스템이 생성하는 데이터를 Prometheus와 Promtail이 원하는 형식으로 제공
 - Prometheus : 시계열 수치(float) 데이터를 저장하는 DB
 - Loki : 시계열 로그(string) 데이터를 저장하는 DB
