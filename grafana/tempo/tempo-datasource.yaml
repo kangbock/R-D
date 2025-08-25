@@ -1,0 +1,36 @@
+# tempo-datasource.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tempo-datasource
+  namespace: monitoring
+  labels:
+    grafana_datasource: "1"
+data:
+  tempo-datasource.yaml: |
+    apiVersion: 1
+    datasources:
+      - name: Tempo
+        type: tempo
+        uid: tempo
+        access: proxy
+        url: http://tempo-query-frontend.observability.svc.cluster.local:3200  # 환경에 맞게 3100/3200 확인
+        basicAuth: false
+        jsonData:
+          # Service Graph가 참조할 메트릭 데이터소스(필수)
+          serviceMap:
+            datasourceUid: prometheus               # Prometheus DS의 UID 또는 이름
+          # (선택) Node graph 위젯 표시
+          nodeGraph:
+            enabled: true
+          # (선택) Traces → Logs 연계(Loki를 쓰는 경우)
+          tracesToLogsV2:
+            datasourceUid: loki
+            spanStartTimeShift: "-2m"
+            spanEndTimeShift: "2m"
+            tags: ["cluster","namespace","pod","service.name"]
+          # (선택) Traces → Metrics 연계(프로비저너블)
+          tracesToMetrics:
+            datasourceUid: prometheus
+            tags:
+              - { key: "service.name", value: "service" }

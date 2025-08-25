@@ -1,0 +1,68 @@
+alertmanager:
+  config:
+    global:
+      resolve_timeout: 5m
+      slack_api_url: 'https://hooks.slack.com/services/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'
+      http_config:
+        follow_redirects: true
+    inhibit_rules:
+      - source_matchers:
+          - 'severity = critical'
+        target_matchers:
+          - 'severity =~ warning|info'
+        equal:
+          - 'namespace'
+          - 'alertname'
+      - source_matchers:
+          - 'severity = warning'
+        target_matchers:
+          - 'severity = info'
+        equal:
+          - 'namespace'
+          - 'alertname'
+      - source_matchers:
+          - 'alertname = InfoInhibitor'
+        target_matchers:
+          - 'severity = info'
+        equal:
+          - 'namespace'
+    route:
+      group_by: ['alertname','namespace','pod']
+      group_wait: 30s
+      group_interval: 5m
+      repeat_interval: 12h
+      receiver: 'slack-notifications'
+      routes:
+      - receiver: 'slack-notifications'
+        matchers:
+          - alertname =~ "InfoInhibitor|Watchdog"
+    receivers:
+    - name: 'slack-notifications'
+      slack_configs:
+      - channel: '#devops'
+        api_url: '<API_URL>'
+        username: 'alertmanager'
+        title: '{{ .CommonLabels.alertname }} ({{ .Status }})'
+        title_link: 'http://alertmanager.k-tech.cloud/#/alerts?receiver=slack-notifications'
+        text: |-
+          <!channel>
+          *Alert:* {{ .CommonLabels.alertname }} | *Status:* {{ .Status }} | *Severity:* {{ or .CommonLabels.severity "n/a" }}
+
+          *Summary:* {{ or .CommonAnnotations.summary .CommonAnnotations.message }}
+          *Description:* {{ .CommonAnnotations.description }}
+          {{ range .Alerts }}
+          *Affected:*
+          namespace  = {{ or .Labels.namespace "n/a" }}
+          pod               = {{ or .Labels.pod "n/a" }}
+          instance       = {{ or .Labels.instance "n/a" }}
+          job                = {{ or .Labels.job "n/a" }}
+
+          Started At {{ .StartsAt | tz "Asia/Seoul" | date "2006-01-02 15:04:05 KST" }}
+          {{ if eq .Status "resolved" }}Ended At {{ .EndsAt | tz "Asia/Seoul" | date "2006-01-02 15:04:05 KST" }}
+          Active For {{ .EndsAt.Sub .StartsAt | humanizeDuration }}
+          {{ else }}Active For {{ since .StartsAt | humanizeDuration }}
+          {{ end }}
+          {{ end }}
+          *Links:* https://alertmanager.k-tech.cloud
+          Generator: https://prometheus.k-tech.cloud/alerts
+        send_resolved: true

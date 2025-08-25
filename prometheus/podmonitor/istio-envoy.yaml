@@ -1,0 +1,59 @@
+# istio-envoy
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: istio-envoy
+  namespace: monitoring
+  labels: { release: kube-prometheus-stack }
+spec:
+  namespaceSelector:
+    matchNames: ["default"]
+  selector:
+    matchExpressions:
+      - key: app
+        operator: In
+        values: ["nginx","login-js"]
+  podMetricsEndpoints:
+    - port: http-envoy-prom
+      path: /stats/prometheus
+      interval: 30s
+---
+# istiod (컨트롤 플레인)
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: istiod
+  namespace: monitoring
+  labels: { release: kube-prometheus-stack }
+spec:
+  jobLabel: app
+  namespaceSelector:
+    matchNames: ["istio-system"]
+  selector:
+    matchLabels:
+      app: istiod
+  podMetricsEndpoints:
+    - portNumber: 15014   # istiod monitoring port
+      path: /metrics
+      interval: 30s
+---
+# Istio 게이트웨이(ingress/egress 공통) - Envoy 메트릭
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: istio-gateways
+  namespace: monitoring
+  labels: { release: kube-prometheus-stack }
+spec:
+  jobLabel: istio
+  namespaceSelector:
+    matchNames: ["istio-system"]
+  selector:
+    matchExpressions:
+      - key: istio               # 일반적으로 istio=ingressgateway/egressgateway 라벨 존재
+        operator: In
+        values: ["ingressgateway","egressgateway"]
+  podMetricsEndpoints:
+    - port: http-envoy-prom
+      path: /stats/prometheus
+      interval: 30s

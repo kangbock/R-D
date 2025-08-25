@@ -1,0 +1,159 @@
+# tempo-dashboard.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-tempo-observability
+  namespace: monitoring
+  labels:
+    grafana_dashboard: "1"
+  annotations:
+    k8s-sidecar-target-directory: Tempo
+data:
+  tempo-observability.json: |-
+    {
+      "title": "Tempo Service Observability",
+      "timezone": "browser",
+      "schemaVersion": 39,
+      "version": 3,
+      "refresh": "30s",
+      "time": { "from": "now-6h", "to": "now" },
+
+      "templating": {
+        "list": [
+          {
+            "type": "datasource",
+            "name": "ds",
+            "query": "prometheus",
+            "current": { "selected": true, "text": "Prometheus", "value": "prometheus" }
+          },
+          {
+            "type": "query",
+            "name": "namespace",
+            "label": "namespace (regex)",
+            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "query": "label_values(namespace)",
+            "refresh": 2,
+            "multi": true,
+            "includeAll": true,
+            "sort": 1
+          },
+          {
+            "type": "query",
+            "name": "service",
+            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "query": "label_values(traces_spanmetrics_calls_total{span_kind=\"SPAN_KIND_SERVER\", service=~\".*\\\\.${namespace}\"}, service)",
+            "refresh": 2,
+            "multi": true,
+            "includeAll": true,
+            "sort": 1
+          },
+          {
+            "type": "query",
+            "name": "client",
+            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "query": "label_values(traces_service_graph_request_total{client=~\".*\\\\.${namespace}\"}, client)",
+            "refresh": 2,
+            "multi": true,
+            "includeAll": true,
+            "sort": 1
+          },
+          {
+            "type": "query",
+            "name": "server",
+            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "query": "label_values(traces_service_graph_request_total{server=~\".*\\\\.${namespace}\"}, server)",
+            "refresh": 2,
+            "multi": true,
+            "includeAll": true,
+            "sort": 1
+          }
+        ]
+      },
+
+      "panels": [
+        {
+          "type": "stat",
+          "title": "Total RPS",
+          "gridPos": { "x": 0, "y": 0, "w": 6, "h": 5 },
+          "targets": [
+            {
+              "expr": "sum(rate(traces_spanmetrics_calls_total{span_kind=\"SPAN_KIND_SERVER\", service=~\"$service\", service=~\".*\\\\.${namespace}\"}[5m]))",
+              "datasource": { "type": "prometheus", "uid": "prometheus" }
+            }
+          ],
+          "fieldConfig": { "defaults": { "unit": "req/s" } }
+        },
+
+        {
+          "type": "stat",
+          "title": "Error rate (%)",
+          "gridPos": { "x": 6, "y": 0, "w": 6, "h": 5 },
+          "targets": [
+            {
+              "expr": "100 * sum(rate(traces_spanmetrics_calls_total{span_kind=\"SPAN_KIND_SERVER\", status_code=\"STATUS_CODE_ERROR\", service=~\"$service\", service=~\".*\\\\.${namespace}\"}[5m])) / sum(rate(traces_spanmetrics_calls_total{span_kind=\"SPAN_KIND_SERVER\", service=~\"$service\", service=~\".*\\\\.${namespace}\"}[5m]))",
+              "datasource": { "type": "prometheus", "uid": "prometheus" }
+            }
+          ],
+          "fieldConfig": { "defaults": { "unit": "percent" } }
+        },
+
+        {
+          "type": "nodeGraph",
+          "title": "Service Map (client → server)",
+          "gridPos": { "x": 12, "y": 0, "w": 12, "h": 10 },
+          "targets": [
+            {
+              "datasource": { "type": "tempo", "uid": "tempo" },
+              "queryType": "serviceMap",
+              "filters": [
+                { "key": "service.name", "operator": "=~", "value": "${service}" },
+                { "key": "k8s.namespace.name", "operator": "=~", "value": "${namespace}" }
+              ]
+            }
+          ],
+          "options": {
+            "legend": { "display": ["rps", "latency", "success", "failed"] },
+            "edges": { "arrows": true }
+          }
+        },
+
+        {
+          "type": "stat",
+          "title": "p95 latency (ms)",
+          "gridPos": { "x": 0, "y": 5, "w": 12, "h": 5 },
+          "targets": [
+            {
+              "expr": "1000 * histogram_quantile(0.95, sum by (le, service)(rate(traces_spanmetrics_latency_bucket{span_kind=\"SPAN_KIND_SERVER\", service=~\"$service\", service=~\".*\\\\.${namespace}\"}[5m])))",
+              "datasource": { "type": "prometheus", "uid": "prometheus" }
+            }
+          ],
+          "fieldConfig": { "defaults": { "unit": "ms" } }
+        },
+
+        {
+          "type": "timeseries",
+          "title": "Service RPS",
+          "gridPos": { "x": 0, "y": 10, "w": 12, "h": 8 },
+          "targets": [
+            {
+              "expr": "sum by (service)(rate(traces_spanmetrics_calls_total{span_kind=\"SPAN_KIND_SERVER\", service=~\"$service\", service=~\".*\\\\.${namespace}\"}[5m]))",
+              "datasource": { "type": "prometheus", "uid": "prometheus" }
+            }
+          ],
+          "fieldConfig": { "defaults": { "unit": "req/s" } }
+        },
+
+        {
+          "type": "timeseries",
+          "title": "Edge p95 (client→server)",
+          "gridPos": { "x": 12, "y": 10, "w": 12, "h": 8 },
+          "targets": [
+            {
+              "expr": "1000 * histogram_quantile(0.95, sum by (client, server, le)(rate(traces_service_graph_request_server_seconds_bucket{client=~\"$client\", server=~\"$server\", server=~\".*\\\\.${namespace}\"}[5m])))",
+              "datasource": { "type": "prometheus", "uid": "prometheus" }
+            }
+          ],
+          "fieldConfig": { "defaults": { "unit": "ms" } }
+        }
+      ]
+    }

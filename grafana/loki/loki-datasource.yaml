@@ -1,0 +1,34 @@
+# loki-datasource.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: loki-datasource
+  namespace: monitoring
+  labels:
+    grafana_datasource: "1"   # kube-prometheus-stack의 Grafana sidecar가 감시하는 라벨
+data:
+  loki-datasource.yaml: |
+    apiVersion: 1
+    prune: true
+    deleteDatasources:
+      - name: Loki
+        orgId: 1
+    datasources:
+      - name: Loki
+        uid: loki
+        type: loki
+        access: proxy
+        url: http://loki-gateway.loki.svc.cluster.local
+        isDefault: false
+        editable: false
+        version: 1
+        jsonData:
+          # 멀티테넌시 헤더 정의
+          httpHeaderName1: "X-Scope-OrgID"
+        secureJsonData:
+          httpHeaderValue1: "self-monitoring"
+        # (선택) Logs → Traces 연계: 로그에서 traceID를 추출하여 Tempo로 점프
+        derivedFields:
+          - name: traceID
+            matcherRegex: "traceID=(\\w+)"
+            datasourceUid: tempo

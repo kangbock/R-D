@@ -1,0 +1,11 @@
+# istio-telemetry-traces.yaml
+apiVersion: telemetry.istio.io/v1
+kind: Telemetry
+metadata:
+  name: mesh-default
+  namespace: istio-system
+spec:
+  tracing:
+  - providers:
+    - name: otlp
+    randomSamplingPercentage: 100.0   # 1차 확인 후 낮추기

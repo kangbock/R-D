@@ -1,0 +1,95 @@
+# tempo-values2.yaml (추가)
+metricsGenerator:
+  enabled: true
+  config:
+    registry:
+      collection_interval: 15s
+    # Prometheus Remote-write 수신 엔드포인트로 푸시
+    storage:
+      remote_write:
+        - url: http://kube-prometheus-stack-prometheus.monitoring.svc.cluster.local:9090/api/v1/write
+  extraArgs:
+    - -config.expand-env=true
+  extraEnv:
+    - name: STORAGE_ACCOUNT_ACCESS_KEY
+      valueFrom:
+        secretKeyRef:
+          name: tempo-azure-credentials
+          key: STORAGE_ACCOUNT_ACCESS_KEY
+
+# Envoy/OTel Collector가 보낼 OTLP 수신 오픈
+traces:
+  otlp:
+    http:
+      # -- Enable Tempo to ingest Open Telemetry HTTP traces
+      enabled: false
+      # -- HTTP receiver advanced config
+      receiverConfig: {}
+    grpc:
+      # -- Enable Tempo to ingest Open Telemetry GRPC traces
+      enabled: true
+      # -- GRPC receiver advanced config
+      receiverConfig: {}
+      # -- Default OTLP gRPC port
+      port: 4317
+
+# 프로세서 활성화는 overrides에서 수행
+overrides:
+  defaults:
+    metrics_generator:
+      processors:
+        - service-graphs
+        - span-metrics
+        
+storage:
+  trace:
+    backend: azure
+    azure:
+      container_name: tempo-traces
+      storage_account_name: kbleestorageaccount
+      storage_account_key: ${STORAGE_ACCOUNT_ACCESS_KEY}
+
+distributor:
+  extraArgs: ["-config.expand-env=true"]
+  extraEnv:
+    - name: STORAGE_ACCOUNT_ACCESS_KEY
+      valueFrom:
+        secretKeyRef:
+          name: tempo-azure-credentials
+          key: STORAGE_ACCOUNT_ACCESS_KEY
+
+ingester:
+  extraArgs: ["-config.expand-env=true"]
+  extraEnv:
+    - name: STORAGE_ACCOUNT_ACCESS_KEY
+      valueFrom:
+        secretKeyRef:
+          name: tempo-azure-credentials
+          key: STORAGE_ACCOUNT_ACCESS_KEY
+
+querier:
+  extraArgs: ["-config.expand-env=true"]
+  extraEnv:
+    - name: STORAGE_ACCOUNT_ACCESS_KEY
+      valueFrom:
+        secretKeyRef:
+          name: tempo-azure-credentials
+          key: STORAGE_ACCOUNT_ACCESS_KEY
+
+queryFrontend:
+  extraArgs: ["-config.expand-env=true"]
+  extraEnv:
+    - name: STORAGE_ACCOUNT_ACCESS_KEY
+      valueFrom:
+        secretKeyRef:
+          name: tempo-azure-credentials
+          key: STORAGE_ACCOUNT_ACCESS_KEY
+
+compactor:
+  extraArgs: ["-config.expand-env=true"]
+  extraEnv:
+    - name: STORAGE_ACCOUNT_ACCESS_KEY
+      valueFrom:
+        secretKeyRef:
+          name: tempo-azure-credentials
+          key: STORAGE_ACCOUNT_ACCESS_KEY

@@ -1,0 +1,140 @@
+notifications:
+  enabled: true
+  argocdUrl: "https://argocd.k-tech.cloud"
+
+  secret:
+    create: true
+    items:
+      slack-token: "<SLACK_TOKEN>"
+
+  notifiers:
+    service.slack: |-
+      token: $slack-token
+
+  templates:
+    # 1) 앱 Health Degraded
+    template.app-health-degraded: |-
+      slack:
+        text: " "
+        attachments: |-
+          [{
+            "color": "danger",
+            "text": "<!channel>\n\n:rotating_light: *{{ .app.metadata.name }}* 상태가 *Degraded*.",
+            "fields": [
+              { "title": "Sync Status",
+                "value": "{{ .app.status.sync.status | default "Unknown" }}",
+                "short": true },
+              { "title": "Health",
+                "value": "{{ .app.status.health.status | default "Unknown" }}",
+                "short": true },
+              { "title": "Repository",
+                "value": "{{ .app.spec.source.repoURL }}",
+                "short": false },
+              { "title": "ArgoCD URL",
+                "value": "<{{ .context.argocdUrl }}/applications/{{ .app.metadata.name }}?operation=true>",
+                "short": false }
+            ]
+          }]
+
+    # 2) Sync 진행 중
+    template.app-sync-running: |-
+      slack:
+        text: " "
+        attachments: |-
+          [{
+            "color": "#439FE0",
+            "text": "<!channel>\n\n:hourglass_flowing_sand: *{{ .app.metadata.name }}* 동기화 진행중.\n\nStarted Time : {{ .app.status.operationState.startedAt }}",
+            "fields": [
+              { "title": " ", "value": " ", "short": false },
+              { "title": "Sync Status",
+                "value": "{{ .app.status.sync.status | default "Unknown" }}",
+                "short": true },
+              { "title": "Repository",
+                "value": "{{ .app.spec.source.repoURL }}",
+                "short": true },
+              { "title": "ArgoCD URL",
+                "value": "<{{ .context.argocdUrl }}/applications/{{ .app.metadata.name }}?operation=true>",
+                "short": false }
+            ]
+          }]
+
+    # 3) Sync 성공
+    template.app-sync-succeeded: |-
+      slack:
+        text: " "
+        attachments: |-
+          [{
+            "color": "good",
+            "text": "<!channel>\n\n:white_check_mark: *{{ .app.metadata.name }}* 동기화 성공!\n\nFinished Time : {{ .app.status.operationState.finishedAt }}.",
+            "fields": [
+              { "title": "Sync Status",
+                "value": "{{ .app.status.sync.status | default "Synced" }}",
+                "short": true },
+              { "title": "Health",
+                "value": "{{ .app.status.health.status | default "Unknown" }}",
+                "short": true },
+              { "title": "Repository",
+                "value": "{{ .app.spec.source.repoURL }}",
+                "short": false },
+              { "title": "Revision",
+                "value": "{{ .app.status.sync.revision | default "-" }}",
+                "short": false },
+              { "title": "ArgoCD URL",
+                "value": "<{{ .context.argocdUrl }}/applications/{{ .app.metadata.name }}?operation=true>",
+                "short": false }
+            ]
+          }]
+
+    # 4) Sync 실패
+    template.app-sync-failed: |-
+      slack:
+        text: " "
+        attachments: |-
+          [{
+            "color": "danger",
+            "text": "<!channel>\n\n:x: *{{ .app.metadata.name }}* 동기화 실패!!!\n\nFinished Time : {{ .app.status.operationState.finishedAt }}.",
+            "fields": [
+              { "title": "Phase",
+                "value": "{{ .app.status.operationState.phase | default "Error" }}",
+                "short": true },
+              { "title": "Health",
+                "value": "{{ .app.status.health.status | default "Unknown" }}",
+                "short": true },
+              { "title": "Repository",
+                "value": "{{ .app.spec.source.repoURL }}",
+                "short": false },
+              { "title": "Message",
+                "value": "{{ .app.status.operationState.message | default "N/A" }}",
+                "short": false },
+              { "title": "ArgoCD URL",
+                "value": "<{{ .context.argocdUrl }}/applications/{{ .app.metadata.name }}?operation=true>",
+                "short": false }
+            ]
+          }]
+
+  triggers:
+    # 접두사 추가
+    trigger.on-health-degraded: |-
+      - when: app.status.health.status == 'Degraded'
+        send: [app-health-degraded]
+
+    trigger.on-sync-running: |-
+      - when: app.status.operationState.phase == 'Running'
+        send: [app-sync-running]
+
+    trigger.on-sync-succeeded: |-
+      - when: app.status.operationState.phase == 'Succeeded' && app.status.health.status == 'Healthy'
+        send: [app-sync-succeeded]
+
+    trigger.on-sync-failed: |-
+      - when: app.status.operationState.phase in ['Error','Failed']
+        send: [app-sync-failed]
+
+  subscriptions:
+    - recipients:
+        - slack:devops
+      triggers:
+        - on-health-degraded
+        - on-sync-running
+        - on-sync-succeeded
+        - on-sync-failed

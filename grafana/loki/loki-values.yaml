@@ -1,0 +1,102 @@
+# loki-values.yaml
+serviceAccount:
+  name: loki
+  annotations:
+    "azure.workload.identity/client-id": "<CLIENT_ID>"
+  labels:
+    "azure.workload.identity/use": "true"
+
+loki:
+  # WI 토큰 교환 신호
+  podLabels:
+    "azure.workload.identity/use": "true"
+
+  # [검증 충족용] common.storage 경로에 'azure' 지정 + bucketNames 필수
+  storage:
+    type: azure
+    bucketNames:
+      chunks: "loki-chunks"   # Blob 컨테이너 이름 (미리 존재)
+      ruler:  "loki-ruler"    # Blob 컨테이너 이름 (미리 존재)
+      # admin:  "admin"       # GEL(엔터프라이즈) 전용. OSS면 생략 권장.
+    azure:
+      accountName: "kbleestorageaccount"
+      # Workload Identity(연합 토큰) 사용 — 키/연결문자열 불필요
+      useFederatedToken: true
+      # 필요 시 endpointSuffix/requestTimeout 등 추가 가능
+
+  # [실제 런타임 스토리지] TSDB + Azure Blob
+  schemaConfig:
+    configs:
+      - from: "2024-04-01"
+        store: tsdb
+        object_store: azure
+        schema: v13
+        index:
+          prefix: loki_index_
+          period: 24h
+
+  storage_config:
+    azure:
+      account_name: "kbleestorageaccount"
+      container_name: "loki-chunks"
+      use_federated_token: true
+
+  limits_config:
+    allow_structured_metadata: true
+    volume_enabled: true
+    retention_period: 672h  # 28d
+
+  compactor:
+    retention_enabled: true
+    delete_request_store: azure
+
+ruler:
+  enable_api: true
+  storage:
+    type: azure
+    azure:
+      account_name: "kbleestorageaccount"
+      container_name: "loki-ruler"
+      use_federated_token: true
+  alertmanager_url: "http://kube-prometheus-stack-alertmanager.monitoring:9093"
+  
+deploymentMode: Distributed
+
+ingester:
+  replicas: 3
+  zoneAwareReplication:
+    enabled: false
+querier:
+  replicas: 3
+  maxUnavailable: 2
+  query_ingesters_within: 3h   # 최근 3시간은 ingester까지 조회
+queryFrontend:
+  replicas: 2
+  maxUnavailable: 1
+queryScheduler:
+  replicas: 2
+distributor:
+  replicas: 3
+  maxUnavailable: 2
+compactor:
+  replicas: 1
+indexGateway:
+  replicas: 2
+  maxUnavailable: 1
+
+bloomPlanner:
+  replicas: 0
+bloomBuilder:
+  replicas: 0
+bloomGateway:
+  replicas: 0
+
+backend:
+  replicas: 0
+read:
+  replicas: 0
+write:
+  replicas: 0
+
+singleBinary:
+  replicas: 0

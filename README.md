@@ -261,9 +261,9 @@ type: kubernetes.io/dockerconfigjson
 ```
 
 ```
-kubectl apply -f R-D/kaniko/.
-kubectl apply -n devops-tools -f R-D/kaniko/.
-kubectl apply -n istio-system -f R-D/kaniko/.
+kubectl apply -f R-D/kaniko/regcred.yaml
+kubectl apply -n devops-tools -f R-D/kaniko/regcred.yaml
+kubectl apply -n istio-system -f R-D/kaniko/regcred.yaml
 ```
 <br>
 
@@ -550,9 +550,13 @@ GitOps 기반 지속적 배포 관리
 
 ### ArgoCD Deploy
 ```
-kubectl create namespace argocd
-kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
-kubectl apply -f R-D/argocd/.
+helm repo add argo https://argoproj.github.io/argo-helm
+helm repo update
+
+git clone https://github.com/argoproj/argo-helm.git
+helm install argocd argo/argo-cd -n argocd -f argo-helm/charts/argo-cd/values.yaml --debug
+kubectl apply -f R-D/argocd/argocd-certificate.yaml
+kubectl apply -f R-D/argocd/argocd-ingress.yaml
 ```
 <br>
 
@@ -584,154 +588,9 @@ https://api.slack.com/apps
 ![alt text](img/image-8.png)
 <br>
 
-**argocd-notification-values.yaml**
-```
-notifications:
-  enabled: true
-  argocdUrl: "https://argocd.k-tech.cloud"
-
-  secret:
-    create: true
-    items:
-      slack-token: "<SLACK_TOKEN>"
-
-  notifiers:
-    service.slack: |-
-      token: $slack-token
-
-  templates:
-    # 1) 앱 Health Degraded
-    template.app-health-degraded: |-
-      slack:
-        text: " "
-        attachments: |-
-          [{
-            "color": "danger",
-            "text": "<!channel>\n\n:rotating_light: *{{ .app.metadata.name }}* 상태가 *Degraded*.",
-            "fields": [
-              { "title": "Sync Status",
-                "value": "{{ .app.status.sync.status | default "Unknown" }}",
-                "short": true },
-              { "title": "Health",
-                "value": "{{ .app.status.health.status | default "Unknown" }}",
-                "short": true },
-              { "title": "Repository",
-                "value": "{{ .app.spec.source.repoURL }}",
-                "short": false },
-              { "title": "ArgoCD URL",
-                "value": "<{{ .context.argocdUrl }}/applications/{{ .app.metadata.name }}?operation=true>",
-                "short": false }
-            ]
-          }]
-
-    # 2) Sync 진행 중
-    template.app-sync-running: |-
-      slack:
-        text: " "
-        attachments: |-
-          [{
-            "color": "#439FE0",
-            "text": "<!channel>\n\n:hourglass_flowing_sand: *{{ .app.metadata.name }}* 동기화 진행중.\n\nStarted Time : {{ .app.status.operationState.startedAt }}",
-            "fields": [
-              { "title": " ", "value": " ", "short": false },
-              { "title": "Sync Status",
-                "value": "{{ .app.status.sync.status | default "Unknown" }}",
-                "short": true },
-              { "title": "Repository",
-                "value": "{{ .app.spec.source.repoURL }}",
-                "short": true },
-              { "title": "ArgoCD URL",
-                "value": "<{{ .context.argocdUrl }}/applications/{{ .app.metadata.name }}?operation=true>",
-                "short": false }
-            ]
-          }]
-
-    # 3) Sync 성공
-    template.app-sync-succeeded: |-
-      slack:
-        text: " "
-        attachments: |-
-          [{
-            "color": "good",
-            "text": "<!channel>\n\n:white_check_mark: *{{ .app.metadata.name }}* 동기화 성공!\n\nFinished Time : {{ .app.status.operationState.finishedAt }}.",
-            "fields": [
-              { "title": "Sync Status",
-                "value": "{{ .app.status.sync.status | default "Synced" }}",
-                "short": true },
-              { "title": "Health",
-                "value": "{{ .app.status.health.status | default "Unknown" }}",
-                "short": true },
-              { "title": "Repository",
-                "value": "{{ .app.spec.source.repoURL }}",
-                "short": false },
-              { "title": "Revision",
-                "value": "{{ .app.status.sync.revision | default "-" }}",
-                "short": false },
-              { "title": "ArgoCD URL",
-                "value": "<{{ .context.argocdUrl }}/applications/{{ .app.metadata.name }}?operation=true>",
-                "short": false }
-            ]
-          }]
-
-    # 4) Sync 실패
-    template.app-sync-failed: |-
-      slack:
-        text: " "
-        attachments: |-
-          [{
-            "color": "danger",
-            "text": "<!channel>\n\n:x: *{{ .app.metadata.name }}* 동기화 실패!!!\n\nFinished Time : {{ .app.status.operationState.finishedAt }}.",
-            "fields": [
-              { "title": "Phase",
-                "value": "{{ .app.status.operationState.phase | default "Error" }}",
-                "short": true },
-              { "title": "Health",
-                "value": "{{ .app.status.health.status | default "Unknown" }}",
-                "short": true },
-              { "title": "Repository",
-                "value": "{{ .app.spec.source.repoURL }}",
-                "short": false },
-              { "title": "Message",
-                "value": "{{ .app.status.operationState.message | default "N/A" }}",
-                "short": false },
-              { "title": "ArgoCD URL",
-                "value": "<{{ .context.argocdUrl }}/applications/{{ .app.metadata.name }}?operation=true>",
-                "short": false }
-            ]
-          }]
-
-  triggers:
-    # 접두사 추가
-    trigger.on-health-degraded: |-
-      - when: app.status.health.status == 'Degraded'
-        send: [app-health-degraded]
-
-    trigger.on-sync-running: |-
-      - when: app.status.operationState.phase == 'Running'
-        send: [app-sync-running]
-
-    trigger.on-sync-succeeded: |-
-      - when: app.status.operationState.phase == 'Succeeded' && app.status.health.status == 'Healthy'
-        send: [app-sync-succeeded]
-
-    trigger.on-sync-failed: |-
-      - when: app.status.operationState.phase in ['Error','Failed']
-        send: [app-sync-failed]
-
-  subscriptions:
-    - recipients:
-        - slack:devops
-      triggers:
-        - on-health-degraded
-        - on-sync-running
-        - on-sync-succeeded
-        - on-sync-failed
-```
-<br>
-
 **Argocd Notifiaction CM Depoly**
 ```
-helm upgrade argocd argo/argo-cd -n argocd -f argocd-notification-values.yaml --debug --wait --timeout 10m
+helm upgrade argocd argo/argo-cd -n argocd -f R-D/argocd/argocd-notification-values.yaml --debug --wait --timeout 10m
 ```
 <br>
 
@@ -757,7 +616,8 @@ git clone https://github.com/prometheus-community/helm-charts.git
 
 ```
 helm install kube-prometheus-stack prometheus-community/kube-prometheus-stack --debug --timeout 10m -n monitoring
-kubectl apply -f R-D/prometheus/.
+kubectl apply -f R-D/prometheus/prometheus-certificate.yaml
+kubectl apply -f R-D/prometheus/prometheus-ingress.yaml
 ```
 <br>
 
@@ -780,300 +640,42 @@ kubectl delete crd thanosrulers.monitoring.coreos.com
 ### PodMonitor
 **Istio — 컨트롤 플레인/게이트웨이**
 ```
-# istio-envoy
-apiVersion: monitoring.coreos.com/v1
-kind: PodMonitor
-metadata:
-  name: istio-envoy
-  namespace: monitoring
-  labels: { release: kube-prometheus-stack }
-spec:
-  namespaceSelector:
-    matchNames: ["default"]
-  selector:
-    matchExpressions:
-      - key: app
-        operator: In
-        values: ["nginx","login-js"]
-  podMetricsEndpoints:
-    - port: http-envoy-prom
-      path: /stats/prometheus
-      interval: 30s
----
-# istiod (컨트롤 플레인)
-apiVersion: monitoring.coreos.com/v1
-kind: PodMonitor
-metadata:
-  name: istiod
-  namespace: monitoring
-  labels: { release: kube-prometheus-stack }
-spec:
-  jobLabel: app
-  namespaceSelector:
-    matchNames: ["istio-system"]
-  selector:
-    matchLabels:
-      app: istiod
-  podMetricsEndpoints:
-    - portNumber: 15014   # istiod monitoring port
-      path: /metrics
-      interval: 30s
----
-# Istio 게이트웨이(ingress/egress 공통) - Envoy 메트릭
-apiVersion: monitoring.coreos.com/v1
-kind: PodMonitor
-metadata:
-  name: istio-gateways
-  namespace: monitoring
-  labels: { release: kube-prometheus-stack }
-spec:
-  jobLabel: istio
-  namespaceSelector:
-    matchNames: ["istio-system"]
-  selector:
-    matchExpressions:
-      - key: istio               # 일반적으로 istio=ingressgateway/egressgateway 라벨 존재
-        operator: In
-        values: ["ingressgateway","egressgateway"]
-  podMetricsEndpoints:
-    - port: http-envoy-prom
-      path: /stats/prometheus
-      interval: 30s
+kubectl apply -f R-D/prometheus/podmonitor/istio-envoy.yaml
 ```
 <br>
 
 **Jenkins (API Token 발급)**
 ```
-apiVersion: v1
-kind: Secret
-metadata:
-  name: jenkins-metrics-basic-auth
-  namespace: monitoring
-type: Opaque
-stringData:
-  username: "kangbock"            # Jenkins 사용자명
-  password: "<JENKINS_API_TOKEN>" # 위에서 발급받은 토큰
-```
-```
-apiVersion: monitoring.coreos.com/v1
-kind: PodMonitor
-metadata:
-  name: jenkins
-  namespace: monitoring
-  labels:
-    release: kube-prometheus-stack   # kps 릴리스명에 맞게
-spec:
-  jobLabel: app.kubernetes.io/name
-  namespaceSelector:
-    matchNames:
-      - devops-tools                 # Jenkins가 있는 NS
-  selector:
-    matchLabels:
-      app: jenkins-server            # 너의 포드 라벨
-  podMetricsEndpoints:
-    - port: httpport                 # 컨테이너 포트 이름(8080)
-      path: /prometheus              # 프리픽스 있으면 /<prefix>/prometheus
-      interval: 30s
-      scheme: http
-      basicAuth:
-        username:
-          name: jenkins-metrics-basic-auth
-          key: username
-        password:
-          name: jenkins-metrics-basic-auth
-          key: password
+kubectl apply -f R-D/prometheus/podmonitor/jenkins.yaml
 ```
 <br>
 
 **ArgoCD**
 ```
-apiVersion: monitoring.coreos.com/v1
-kind: PodMonitor
-metadata:
-  name: argocd-repo-server
-  namespace: monitoring
-  labels:
-    release: kube-prometheus-stack
-spec:
-  jobLabel: app.kubernetes.io/name
-  namespaceSelector:
-    matchNames: ["argocd"]
-  selector:
-    matchLabels:
-      app.kubernetes.io/name: argocd-repo-server
-  podMetricsEndpoints:
-    - portNumber: 8084
-      path: /metrics
-      interval: 30s
----
-apiVersion: monitoring.coreos.com/v1
-kind: PodMonitor
-metadata:
-  name: argocd-server
-  namespace: monitoring
-  labels:
-    release: kube-prometheus-stack
-spec:
-  jobLabel: app.kubernetes.io/name
-  namespaceSelector:
-    matchNames: ["argocd"]
-  selector:
-    matchLabels:
-      app.kubernetes.io/name: argocd-server
-  podMetricsEndpoints:
-    - portNumber: 8083
-      path: /metrics
-      interval: 30s
----
-apiVersion: monitoring.coreos.com/v1
-kind: PodMonitor
-metadata:
-  name: argocd-application-controller
-  namespace: monitoring
-  labels:
-    release: kube-prometheus-stack
-spec:
-  jobLabel: app.kubernetes.io/name
-  namespaceSelector:
-    matchNames: ["argocd"]
-  selector:
-    matchLabels:
-      app.kubernetes.io/name: argocd-application-controller
-  podMetricsEndpoints:
-    - portNumber: 8082
-      path: /metrics
-      interval: 30s
----
-apiVersion: monitoring.coreos.com/v1
-kind: PodMonitor
-metadata:
-  name: argocd-applicationset-controller
-  namespace: monitoring
-  labels:
-    release: kube-prometheus-stack
-spec:
-  jobLabel: app.kubernetes.io/name
-  namespaceSelector:
-    matchNames: ["argocd"]
-  selector:
-    matchLabels:
-      app.kubernetes.io/name: argocd-applicationset-controller
-  podMetricsEndpoints:
-    - portNumber: 8080   # 배포에 따라 8085 등일 수 있음
-      path: /metrics
-      interval: 30s
+kubectl apply -f R-D/prometheus/podmonitor/argocd.yaml
 ```
 <br>
 
 **Cert-Manager**
 ```
-apiVersion: monitoring.coreos.com/v1
-kind: PodMonitor
-metadata:
-  name: cert-manager
-  namespace: monitoring
-  labels: { release: kube-prometheus-stack }
-spec:
-  jobLabel: app.kubernetes.io/name
-  namespaceSelector:
-    matchNames: ["cert-manager"]
-  selector:
-    matchLabels:
-      app.kubernetes.io/name: cert-manager
-  podMetricsEndpoints:
-    - portNumber: 9402
-      path: /metrics
-      interval: 30s
+kubectl apply -f R-D/prometheus/podmonitor/cert-manager.yaml
 ```
-**PodMonitor Target**
 <br>
 
+**PodMonitor Target**
 ![alt text](img/image-16.png)
 <br><br>
 
 ### Alertmanager
-**Helm Chart Value.yaml**
-```
-alertmanager:
-  config:
-    global:
-      resolve_timeout: 5m
-      slack_api_url: 'https://hooks.slack.com/services/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'
-      http_config:
-        follow_redirects: true
-    inhibit_rules:
-      - source_matchers:
-          - 'severity = critical'
-        target_matchers:
-          - 'severity =~ warning|info'
-        equal:
-          - 'namespace'
-          - 'alertname'
-      - source_matchers:
-          - 'severity = warning'
-        target_matchers:
-          - 'severity = info'
-        equal:
-          - 'namespace'
-          - 'alertname'
-      - source_matchers:
-          - 'alertname = InfoInhibitor'
-        target_matchers:
-          - 'severity = info'
-        equal:
-          - 'namespace'
-    route:
-      group_by: ['alertname','namespace','pod']
-      group_wait: 30s
-      group_interval: 5m
-      repeat_interval: 12h
-      receiver: 'slack-notifications'
-      routes:
-      - receiver: 'slack-notifications'
-        matchers:
-          - alertname =~ "InfoInhibitor|Watchdog"
-    receivers:
-    - name: 'slack-notifications'
-      slack_configs:
-      - channel: '#devops'
-        api_url: 'https://hooks.slack.com/services/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'
-        username: 'alertmanager'
-        title: '{{ .CommonLabels.alertname }} ({{ .Status }})'
-        title_link: 'http://alertmanager.k-tech.cloud/#/alerts?receiver=slack-notifications'
-        text: |-
-          <!channel>
-          *Alert:* {{ .CommonLabels.alertname }} | *Status:* {{ .Status }} | *Severity:* {{ or .CommonLabels.severity "n/a" }}
-
-          *Summary:* {{ or .CommonAnnotations.summary .CommonAnnotations.message }}
-          *Description:* {{ .CommonAnnotations.description }}
-          {{ range .Alerts }}
-          *Affected:*
-          namespace  = {{ or .Labels.namespace "n/a" }}
-          pod               = {{ or .Labels.pod "n/a" }}
-          instance       = {{ or .Labels.instance "n/a" }}
-          job                = {{ or .Labels.job "n/a" }}
-
-          Started At {{ .StartsAt | tz "Asia/Seoul" | date "2006-01-02 15:04:05 KST" }}
-          {{ if eq .Status "resolved" }}Ended At {{ .EndsAt | tz "Asia/Seoul" | date "2006-01-02 15:04:05 KST" }}
-          Active For {{ .EndsAt.Sub .StartsAt | humanizeDuration }}
-          {{ else }}Active For {{ since .StartsAt | humanizeDuration }}
-          {{ end }}
-          {{ end }}
-          *Links:* https://alertmanager.k-tech.cloud
-          Generator: https://prometheus.k-tech.cloud/alerts
-        send_resolved: true
-```
-<br>
-
 **Prometheus Stack Update**
 ```
-helm upgrade --install kube-prometheus-stack prometheus-community/kube-prometheus-stack --debug -n monitoring -f alertmamager-values.yaml
-kubectl apply -f R-D/alertmanager/.
+helm upgrade --install kube-prometheus-stack prometheus-community/kube-prometheus-stack --debug -n monitoring -f R-D/alertmanger/alertmamager-values.yaml
+kubectl apply -f R-D/alertmanager/alertmanager-certificate.yaml
+kubectl apply -f R-D/alertmanager/alertmanager-ingress.yaml
 ```
 <br>
 
 **Slack Notification**<br>
-
 ![alt text](img/image-4.png)
 <br><br>
 
@@ -1084,7 +686,8 @@ kubectl apply -f R-D/alertmanager/.
 <br>
 
 ```
-kubectl apply -f R-D/grafana/.
+kubectl apply -f R-D/grafana/grafana-certificate.yaml
+kubectl apply -f R-D/grafana/grafana-ingress.yaml
 ```
 <br>
 
@@ -1113,7 +716,8 @@ data:
 
 ```
 kubectl apply -f istio/samples/addons/kiali.yaml
-kubectl apply -f R-D/kiali/.
+kubectl apply -f R-D/kiali/kiali-certificate.yaml
+kubectl apply -f R-D/kiali/kiali-ingress.yaml
 ```
 <br>
 
@@ -1139,53 +743,16 @@ prometheus:
 ```
 <br>
 
+**azure storage account secret**
+```
+kubectl -n observability create secret generic tempo-azure-credentials \
+--from-literal=STORAGE_ACCOUNT_ACCESS_KEY='<Azure_Storage_Account_Key>'
+```
+<br>
+
 **tempo 배포**
 ```
-# tempo-values.yaml
-metricsGenerator:
-  enabled: true
-  config:
-    registry:
-      collection_interval: 15s
-    # Prometheus Remote-write 수신 엔드포인트로 푸시
-    storage:
-      remote_write:
-        - url: http://kube-prometheus-stack-prometheus.monitoring.svc.cluster.local:9090/api/v1/writeextraArgs:
-    - -config.expand-env=true
-  extraEnv:
-    - name: STORAGE_ACCOUNT_ACCESS_KEY
-      valueFrom:
-        secretKeyRef:
-          name: tempo-azure-credentials
-          key: STORAGE_ACCOUNT_ACCESS_KEY
-  
-
-# Envoy/OTel Collector가 보낼 OTLP 수신 오픈
-traces:
-  otlp:
-    http:
-      # -- Enable Tempo to ingest Open Telemetry HTTP traces
-      enabled: false
-      # -- HTTP receiver advanced config
-      receiverConfig: {}
-    grpc:
-      # -- Enable Tempo to ingest Open Telemetry GRPC traces
-      enabled: true
-      # -- GRPC receiver advanced config
-      receiverConfig: {}
-      # -- Default OTLP gRPC port
-      port: 4317
-
-# 프로세서 활성화는 overrides에서 수행
-overrides:
-  defaults:
-    metrics_generator:
-      processors:
-        - service-graphs
-        - span-metrics
-```
-```
-helm upgrade -i tempo grafana/tempo-distributed -n observability --create-namespace -f tempo-values.yaml
+helm upgrade -i tempo grafana/tempo-distributed -n observability --create-namespace -f R-D/grafana/tempo/tempo-values.yaml
 ```
 <br>
 
@@ -1224,20 +791,7 @@ extensionProviders/opentelemetry, defaultProviders.tracing에 otlp가 포함되�
 <br><br>
 
 ```
-# istio-telemetry-traces.yaml
-apiVersion: telemetry.istio.io/v1
-kind: Telemetry
-metadata:
-  name: mesh-default
-  namespace: istio-system
-spec:
-  tracing:
-  - providers:
-    - name: otlp
-    randomSamplingPercentage: 100.0   # 1차 확인 후 낮추기
-```
-```
-kubectl apply -f istio-telemetry-traces.yaml
+kubectl apply -f R-D/grafana/telemetry/istio-telemetry-traces.yaml
 kubectl -n istio-system get telemetry -o yaml
 ```
 tracing.providers.name=otlp, randomSamplingPercentage 확인
@@ -1299,10 +853,155 @@ tracing.providers.name=otlp, randomSamplingPercentage 확인
 ```
 
 ✅ **정리**: Telemetry는 **“Istio가 생성하는 관측 신호를 어떻게 Tempo 같은 백엔드로 보낼지 제어하는 정책”**이고, Tempo는 **“그 신호를 받아 저장·조회하는 백엔드 시스템”**입니다. 따라서 둘은 **보완 관계**에 있으며, **함께 배포해야 운영자 입장에서 완전한 관측 체계**를 구축할 수 있습니다.
+<br>
 
+**실제 프록시 설정 확인**
+```
+istioctl pc bootstrap deploy/<아무 워크로드> -n <ns> | egrep -i 'opentelemetry|otlp|tempo|zipkin’
+```
+<br>
+
+**Grafana/Prometheus에서 지표 확인**
+- Service Graph:
+    
+    ```
+    sum by (client, server) (rate(traces_service_graph_request_total[5m]))
+    ```
+    
+- Span-metrics(지연 p95):
+    
+    ```
+    histogram_quantile(
+      0.95,
+      sum by (le, service, span_name) (
+        rate(traces_spanmetrics_latency_bucket{span_kind="SPAN_KIND_SERVER"}[5m])
+      )
+    )
+    ```
+
+**Tempo Data Source**
+```
+kubectl apply -f R-D/grafana/tempo/tempo-datasource.yaml
+```
+
+**Tempo Dashboard**
+```
+kubectl apply -f R-D/grafana/tempo/tempo-dashboard.yaml
+```
+
+```
+kubectl -n monitoring rollout restart deploy kube-prometheus-stack-grafana
+```
+<br>
+
+**Grafana Service Map**
+![alt text](img/image-17.png)
+<br>
+
+**r/sec**: *requests per second*의 약자입니다. 선택한 시간 창(예: 5분)에서 **요청 처리율**을 초/단위로 나타냅니다.
+**ms/r**: *milliseconds per request*의 약자입니다. **요청 1건당 지연시간(밀리초)** 을 의미합니다.
+<br>
+
+**p95 latency (ms) 패널**
+p95(95번째 백분위) 는 전체 요청 중 가장 느린 상위 5% 직전의 지연 시간입니다.
+예: p95가 120 ms라면, 95%의 요청은 120 ms 이내에 끝났고, 나머지 5%는 더 느렸다는 뜻입니다.<br>
+
+스팬 단위의 원본 트레이스 저장을 Azure Storage Account로 사용
+
+**tempo 업데이트**
+```
+helm upgrade -i tempo grafana/tempo-distributed -n observability --create-namespace -f R-D/grafana/tempo/tempo-values2.yaml
+```
+<br>
+
+**Azure Storage Account tempo-traces Container**
+![alt text](img/image-18.png)
+<br>
 
 
 ## Loki
 
 중앙 집중식 로그 수집 및 저장, Grafana로 분석
+<br>
+
+### Loki 흐름
+![alt text](img/image-18.png)
+<br>
+
+- Collector : 모니터링 대상 시스템이 생성하는 데이터를 Prometheus와 Promtail이 원하는 형식으로 제공
+- Prometheus : 시계열 수치(float) 데이터를 저장하는 DB
+- Loki : 시계열 로그(string) 데이터를 저장하는 DB
+- Promtail : Collector가 출력하는 로그 데이터를 Loki에게 전달
+- Grafana : Prometheus와 Loki의 데이터를 시각화
+<br>
+
+```
+helm repo add grafana https://grafana.github.io/helm-charts
+helm repo update
+
+git clone https://github.com/grafana/helm-charts.git grafana
+helm install loki grafana/loki --values values.yaml -n monitoring
+```
+<br>
+
+### Workload Identity 인증
+**Workload Identity 및 OIDC 활성화**
+![alt text](img/image-20.png)
+<br>
+
+**K8S용 인증서 생성**
+![alt text](img/image-21.png)
+<br>
+
+**IAM 권한 추가**
+![alt text](img/image-22.png)
+<br>
+
+**loki 배포**
+```
+helm upgrade loki grafana/loki -f R-D/grafana/loki/loki-values.yaml -n loki --debug --wait --timeout 10m
+```
+<br>
+
+**필수(Logs 수집·조회가 동작하려면 필요)**
+
+- **Distributor**: 수집(write) 엔드포인트. 클라이언트가 `push`하는 요청을 받아 해시링에 따라 인제스터로 전달.
+- **Ingester**: 로그를 수신·조각화(Chunk)하고 오브젝트 스토리지(TSDB)에 업로드.
+- **Querier**: LogQL 쿼리 실행.
+- **Index Gateway**: TSDB 환경에서 인덱스 질의를 담당(단일/링 모드). 성능·확장성 상 이 경로 권장.
+- **Compactor**: TSDB에서 **보존/압축**을 수행하는 **핵심 컴포넌트**. 미가동 시 보존이 적용되지 않습니다.
+
+> 위 5가지는 “분산(마이크로서비스) 모드” Loki의 기본 골격입니다. 컴포넌트들의 역할과 모드는 공식 문서의 구성요소/배포 모드에 정리되어 있습니다.
+> 
+
+**선택(없어도 Loki는 동작)**
+
+- **Query Frontend**: 쿼리 분할·캐시·큐잉 등으로 조회 성능을 높이는 프록시. “권장”이지만 **필수는 아님**.
+- **Query Scheduler**: **선택적** 컴포넌트. 대규모에서 프런트엔드의 큐를 외부화해 공정성/확장성을 개선.
+- **Ruler**: 로그 기반 룰/알림을 사용할 때만 필요.
+- **Canary**: 수집 경로를 지속 점검하는 유틸리티. 품질 감시에 유용하나 **운영 필수는 아님**.
+- **Chunks/Results Cache(Memcached)**: 성능 최적화용. 비활성화 가능하나, 쿼리·스토리지 부하가 커질 수 있습니다.
+- **Gateway(NGINX)**: 외부 진입 단일 창구가 필요 없거나, Istio/Ingress로 직접 라우팅할 계획이면 생략 가능.
+<br>
+
+**Loki Data Source**
+```
+kubectl apply -f R-D/grafana/loki/loki-datasource.yaml
+```
+<br>
+
+**Promtail 배포**
+```
+kubectl apply -f R-D/grafana/promtail/promtail-values.yaml
+```
+```
+helm upgrade --install promtail grafana/promtail -n monitoring --debug -f promtail-values.yaml
+```
+<br>
+
+**Loki Dashboard**
+```
+kubectl apply -f R-D/grafana/loki/loki-dashboard.yaml
+```
+![alt text](img/image-23.png)
 <br>

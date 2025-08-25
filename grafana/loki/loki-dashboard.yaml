@@ -1,0 +1,104 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboards-loki
+  namespace: monitoring
+  labels:
+    grafana_dashboard: "1"   # Grafana sidecar가 감시하는 레이블 (환경에 맞게 조정)
+data:
+  loki-overview.json: |
+    {
+      "title": "Loki - Kubernetes Logs (Overview)",
+      "uid": "loki-overview",
+      "timezone": "browser",
+      "schemaVersion": 39,
+      "version": 1,
+      "refresh": "10s",
+      "tags": ["loki","kubernetes","logs"],
+      "templating": {
+        "list": [
+          {
+            "name": "ds",
+            "type": "datasource",
+            "query": "loki",
+            "current": { "text": "loki", "value": "loki" }
+          },
+          {
+            "name": "namespace",
+            "type": "query",
+            "datasource": { "type": "loki", "uid": "loki" },
+            "query": "label_values({}, namespace)",
+            "includeAll": true,
+            "multi": true,
+            "refresh": 1,
+            "current": { "text": "All", "value": ".*" },
+            "regex": ""
+          },
+          {
+            "name": "pod",
+            "type": "query",
+            "datasource": { "type": "loki", "uid": "loki" },
+            "query": "label_values({namespace=~\"$namespace\"}, pod)",
+            "includeAll": true,
+            "multi": true,
+            "refresh": 2,
+            "current": { "text": "All", "value": ".*" },
+            "regex": ""
+          }
+        ]
+      },
+      "panels": [
+        {
+          "type": "timeseries",
+          "title": "Log lines /s by namespace",
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+          "targets": [
+            {
+              "refId": "A",
+              "datasource": { "type": "loki", "uid": "loki" },
+              "expr": "sum by (namespace) (rate({namespace=~\"$namespace\"}[$__interval]))"
+            }
+          ],
+          "options": { "legend": { "displayMode": "table", "placement": "right" } }
+        },
+        {
+          "type": "timeseries",
+          "title": "Top pods by log rate (last 5m)",
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+          "targets": [
+            {
+              "refId": "A",
+              "datasource": { "type": "loki", "uid": "loki" },
+              "expr": "topk(10, sum by (pod) (rate({namespace=~\"$namespace\"} [5m])))"
+            }
+          ],
+          "options": { "legend": { "displayMode": "table", "placement": "right" } }
+        },
+        {
+          "type": "logs",
+          "title": "Recent logs (filtered by namespace/pod)",
+          "gridPos": { "h": 10, "w": 12, "x": 0, "y": 8 },
+          "options": { "showLabels": true, "showTime": true, "wrapLogMessage": true },
+          "targets": [
+            {
+              "refId": "A",
+              "datasource": { "type": "loki", "uid": "loki" },
+              "expr": "{namespace=~\"$namespace\", pod=~\"$pod\"}"
+            }
+          ]
+        },
+        {
+          "type": "logs",
+          "title": "Recent ERROR/WARN",
+          "gridPos": { "h": 10, "w": 12, "x": 12, "y": 8 },
+          "options": { "showLabels": true, "showTime": true, "wrapLogMessage": true },
+          "targets": [
+            {
+              "refId": "A",
+              "datasource": { "type": "loki", "uid": "loki" },
+              "expr": "{namespace=~\"$namespace\", pod=~\"$pod\"} |~ \"(?i)(error|warn)\""
+            }
+          ]
+        }
+      ]
+    }

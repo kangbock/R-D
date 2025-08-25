@@ -1,0 +1,32 @@
+# promtail-values.yaml
+config:
+  clients:
+    - url: http://loki-gateway.loki.svc.cluster.local/loki/api/v1/push
+      tenant_id: self-monitoring
+
+scrape_configs:
+  # (A) 모든 파드 로그 수집 - 필요 네임스페이스만 지정 가능
+  - job_name: kubernetes-pods
+    kubernetes_sd_configs:
+      - role: pod
+    pipeline_stages:
+      - cri: {}   # containerd/CRI 로그 파싱
+    relabel_configs:
+      # 필수 라벨 정규화
+      - source_labels: [__meta_kubernetes_namespace]
+        target_label: namespace
+      - source_labels: [__meta_kubernetes_pod_name]
+        target_label: pod
+      - source_labels: [__meta_kubernetes_pod_container_name]
+        target_label: container
+
+      # 서비스 라벨 표준화: app.kubernetes.io/name → service (Tempo 연계 시 'service' 사용을 권장)
+      - source_labels: [__meta_kubernetes_pod_label_app_kubernetes_io_name]
+        target_label: service
+      # 보조: app 라벨이 있을 경우에도 service_name 동시 부여
+      - source_labels: [__meta_kubernetes_pod_label_app]
+        target_label: service_name
+      # 원치 않으면 canary 제외(선택)
+      - action: drop
+        source_labels: [__meta_kubernetes_pod_name]
+        regex: "loki-canary-.*"
