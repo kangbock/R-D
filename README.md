@@ -1128,7 +1128,7 @@ AKS+Istio에서는 **Envoy가 생성한 스팬을 OTLP로 Collector → (Tempo/J
 
 **스팬(Span)** 은 하나의 트레이스(trace)를 구성하는 **단일 작업 단위**로, *작업 이름(operation name), 시작·종료 시각, 지속시간, 속성(attributes), 이벤트(events), 링크(links), 상태(status), 스팬 컨텍스트(SpanContext)* 를 포함합니다. 스팬들은 **부모–자식 관계**로 연결되어 트레이스(요청의 전체 경로)를 형성합니다. <br>
 
-애플리케이션/프록시(Envoy)가 스팬 생성 → **OTLP/Zipkin** 등으로 **OTel Collector** 수집·전처리 → **트레이싱 백엔드(Tempo/Jaeger)** 저장·색인 → Grafana/Jaeger UI에서 스팬·트레이스 조회(필요 시 **Prometheus 메트릭과 상호 점프**) <br>
+애플리케이션/프록시(Envoy)가 스팬 생성 → **OTLP/Zipkin** 등으로 **OTel Collector** 수집·전처리 → **트레이싱 백엔드(Tempo/Jaeger)** 저장·색인 → Grafana/Jaeger UI에서 스팬·트레이스 조회(필요 시 **Prometheus 메트릭과 상호 점프**) <br><br>
 
 **prometheus 원격 쓰기(수신) enable**
 ```
@@ -1221,7 +1221,7 @@ istioctl install -f istio-otlp-provider.yaml -y
 kubectl -n istio-system get cm istio -o jsonpath='{.data.mesh}' | sed -n '1,200p'
 ```
 extensionProviders/opentelemetry, defaultProviders.tracing에 otlp가 포함되어야 함
-<br>
+<br><br>
 
 ```
 # istio-telemetry-traces.yaml
@@ -1241,9 +1241,9 @@ kubectl apply -f istio-telemetry-traces.yaml
 kubectl -n istio-system get telemetry -o yaml
 ```
 tracing.providers.name=otlp, randomSamplingPercentage 확인
-<br>
+<br><br>
 
-**Telemetry를 Tempo와 함께 배포한 이유**
+#### Telemetry를 Tempo와 함께 배포한 이유
 **1. Telemetry의 역할**
 
 - **Istio의 관측 데이터 제어 레이어**
@@ -1255,9 +1255,6 @@ tracing.providers.name=otlp, randomSamplingPercentage 확인
 - **표준화된 제어**
     
     워크로드/네임스페이스 단위로 세밀한 설정이 가능해 불필요한 신호를 줄이고 필요한 신호만 유지할 수 있습니다.
-    
-
----
 
 **2. Tempo의 역할**
 
@@ -1268,9 +1265,6 @@ tracing.providers.name=otlp, randomSamplingPercentage 확인
 - **대규모/저비용 설계**
     
     트레이스를 오브젝트 스토리지에 장기 저장하며, 운영자가 필요할 때 상세 트레이스를 검색·분석할 수 있게 해줍니다.
-    
-
----
 
 **3. Telemetry + Tempo를 함께 배포하는 이유**
 
@@ -1289,8 +1283,6 @@ tracing.providers.name=otlp, randomSamplingPercentage 확인
 4. **운영 비용 최적화**
     - 불필요한 트레이스/메트릭을 줄이고, 중요한 요청만 Tempo에 저장해 스토리지 비용과 분석 복잡도를 줄입니다.
 
----
-
 **4. 간단 아키텍처 흐름**
 
 ```
@@ -1305,8 +1297,6 @@ tracing.providers.name=otlp, randomSamplingPercentage 확인
 [Grafana (TraceQL)로 조회 및 분석]
 
 ```
-
----
 
 ✅ **정리**: Telemetry는 **“Istio가 생성하는 관측 신호를 어떻게 Tempo 같은 백엔드로 보낼지 제어하는 정책”**이고, Tempo는 **“그 신호를 받아 저장·조회하는 백엔드 시스템”**입니다. 따라서 둘은 **보완 관계**에 있으며, **함께 배포해야 운영자 입장에서 완전한 관측 체계**를 구축할 수 있습니다.
 
