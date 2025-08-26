@@ -40,7 +40,7 @@ alertmanager:
     - name: 'slack-notifications'
       slack_configs:
       - channel: '#devops'
-        api_url: '<API_URL>'
+        api_url: '<SLACK_API_URL>'
         username: 'alertmanager'
         title: '{{ .CommonLabels.alertname }} ({{ .Status }})'
         title_link: 'http://alertmanager.k-tech.cloud/#/alerts?receiver=slack-notifications'
