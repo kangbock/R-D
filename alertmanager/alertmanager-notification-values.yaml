@@ -2,7 +2,7 @@ alertmanager:
   config:
     global:
       resolve_timeout: 5m
-      slack_api_url: 'https://hooks.slack.com/services/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'
+      slack_api_url: '<SLACK_API_URL>'
       http_config:
         follow_redirects: true
     inhibit_rules:
@@ -65,4 +65,5 @@ alertmanager:
           {{ end }}
           *Links:* https://alertmanager.k-tech.cloud
           Generator: https://prometheus.k-tech.cloud/alerts
+
         send_resolved: true
