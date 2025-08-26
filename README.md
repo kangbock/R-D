@@ -20,7 +20,7 @@
 | 알림 연계 | Slack | Jenkins 파이프라인에서 Slack 알림(`slackSend`) |
 | 참조 리포지토리 | `Terraform Basic` | 사전 작업으로 Terraform 인프라 코드 리포지토리 참조 |
 | 애플리케이션 소스 | `msa_nginx`, `msa_deploy` | 이미지 빌드/배포 대상 리포지토리로 Jenkins 파이프라인에서 사용 |
-
+<br>
 
 ## 사전 작업 - Terraform 인프라 구성
 
