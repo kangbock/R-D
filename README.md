@@ -1,5 +1,25 @@
 # CI/CD와 PLG 실습 과정
 
+**기술 스택**
+| 영역 | 기술/도구 | 용도 및 특징 |
+| --- | --- | --- |
+| 인프라/환경 | Azure VM (Ubuntu 22.04), Azure CLI, AKS, Docker | Azure 구독에 서비스 프린시펄로 로그인, AKS 컨텍스트 연결, 로컬(또는 점프박스) Ubuntu 22.04에서 Docker/CLI 사용 |
+| 패키지/배포 | Helm | 쿠버네티스 앱 배포/관리(Helm 설치 스크립트 사용) |
+| 서비스 메시 | Istio | demo 프로필 설치, 네임스페이스 자동 사이드카 주입 |
+| 가시화(서비스 메시) | Kiali | 메시 토폴로지/트래픽 가시화 도구 |
+| 인그레스 | ingress-nginx | Azure LB 헬스프루브 경로 어노테이션 포함하여 설치 |
+| 인증서 관리 | cert-manager (Let’s Encrypt) | ClusterIssuer/Secret 기반 인증서 자동화 |
+| 레지스트리 | Harbor | 프라이빗 레지스트리, NGINX Ingress + TLS(Secret/Issuer) 구성 |
+| CI | Jenkins | 쿠버네티스에 Jenkins 배포, 플러그인(kubernetes, slack) 사용 |
+| 이미지 빌드 | Kaniko | Docker 데몬 없이 K8s 내부에서 이미지 빌드, dockerconfig Secret 사용 |
+| CD/GitOps | Argo CD | Git 변경(YAML) 기반 자동 배포 플로우로 사용 |
+| 모니터링 | Prometheus | 메트릭 수집 및 Alert 발송(PLG 워크플로우) |
+| 알림 | Alertmanager | 경보 라우팅 및 통합 |
+| 대시보드 | Grafana | 관측 대시보드(PLG 구성 요소) |
+| 로깅 | Grafana Loki | 로그 수집/분석 |
+| 알림 연계 | Slack | Jenkins 파이프라인에서 Slack 알림(`slackSend`) |
+| 참조 리포지토리 | `Terraform Basic` | 사전 작업으로 Terraform 인프라 코드 리포지토리 참조 |
+| 애플리케이션 소스 | `msa_nginx`, `msa_deploy` | 이미지 빌드/배포 대상 리포지토리로 Jenkins 파이프라인에서 사용 |
 
 
 ## 사전 작업 - Terraform 인프라 구성
