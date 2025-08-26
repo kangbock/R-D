@@ -808,6 +808,7 @@ spec:
 istioctl install -f istio-otlp-provider.yaml -y
 kubectl -n istio-system get cm istio -o jsonpath='{.data.mesh}' | sed -n '1,200p'
 ```
+![alt text](img/image-26.png)
 extensionProviders/opentelemetry, defaultProviders.tracing에 otlp가 포함되어야 함
 <br><br>
 
@@ -815,6 +816,7 @@ extensionProviders/opentelemetry, defaultProviders.tracing에 otlp가 포함되�
 kubectl apply -f R-D/grafana/telemetry/istio-telemetry-traces.yaml
 kubectl -n istio-system get telemetry -o yaml
 ```
+![alt text](img/image-27.png)
 tracing.providers.name=otlp, randomSamplingPercentage 확인
 <br><br>
 
