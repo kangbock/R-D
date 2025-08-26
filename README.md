@@ -782,6 +782,7 @@ helm upgrade -i tempo grafana/tempo-distributed -n observability --create-namesp
 <br>
 
 **Istio → Tempo(OTLP) 전송 설정**
+<br>
 Mesh 단에서 OTLP Provider를 Tempo Distributor로 지정하고, Telemetry로 샘플링을 켭니다.
 <br>
 
