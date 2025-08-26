@@ -1005,3 +1005,7 @@ kubectl apply -f R-D/grafana/loki/loki-dashboard.yaml
 ```
 ![alt text](img/image-23.png)
 <br>
+
+**Azure Storage Account**
+![alt text](img/image-25.png)
+<br>
