@@ -922,7 +922,6 @@ kubectl -n monitoring rollout restart deploy kube-prometheus-stack-grafana
 <br>
 
 **r/sec**: *requests per second*의 약자입니다. 선택한 시간 창(예: 5분)에서 **요청 처리율**을 초/단위로 나타냅니다.<br>
-
 **ms/r**: *milliseconds per request*의 약자입니다. **요청 1건당 지연시간(밀리초)** 을 의미합니다.<br>
 
 **p95 latency (ms) 패널**<br>
