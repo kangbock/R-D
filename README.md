@@ -875,7 +875,7 @@ tracing.providers.name=otlp, randomSamplingPercentage 확인
 
 ```
 
-✅ **정리**: Telemetry는 **“Istio가 생성하는 관측 신호를 어떻게 Tempo 같은 백엔드로 보낼지 제어하는 정책”**이고, Tempo는 **“그 신호를 받아 저장·조회하는 백엔드 시스템”**입니다. 따라서 둘은 **보완 관계**에 있으며, **함께 배포해야 운영자 입장에서 완전한 관측 체계**를 구축할 수 있습니다.
+✅ **정리**: Telemetry는 “**Istio가 생성하는 관측 신호를 어떻게 Tempo 같은 백엔드로 보낼지 제어하는 정책**”이고, Tempo는 “**그 신호를 받아 저장·조회하는 백엔드 시스템**”입니다. 따라서 둘은 **보완 관계**에 있으며, **함께 배포해야 운영자 입장에서 완전한 관측 체계**를 구축할 수 있습니다.
 <br>
 
 **실제 프록시 설정 확인**
@@ -921,12 +921,12 @@ kubectl -n monitoring rollout restart deploy kube-prometheus-stack-grafana
 ![alt text](img/image-17.png)
 <br>
 
-**r/sec**: *requests per second*의 약자입니다. 선택한 시간 창(예: 5분)에서 **요청 처리율**을 초/단위로 나타냅니다.
-**ms/r**: *milliseconds per request*의 약자입니다. **요청 1건당 지연시간(밀리초)** 을 의미합니다.
-<br>
+**r/sec**: *requests per second*의 약자입니다. 선택한 시간 창(예: 5분)에서 **요청 처리율**을 초/단위로 나타냅니다.<br>
 
-**p95 latency (ms) 패널**
-p95(95번째 백분위) 는 전체 요청 중 가장 느린 상위 5% 직전의 지연 시간입니다.
+**ms/r**: *milliseconds per request*의 약자입니다. **요청 1건당 지연시간(밀리초)** 을 의미합니다.<br>
+
+**p95 latency (ms) 패널**<br>
+p95(95번째 백분위) 는 전체 요청 중 가장 느린 상위 5% 직전의 지연 시간입니다.<br>
 예: p95가 120 ms라면, 95%의 요청은 120 ms 이내에 끝났고, 나머지 5%는 더 느렸다는 뜻입니다.<br>
 
 스팬 단위의 원본 트레이스 저장을 Azure Storage Account로 사용
