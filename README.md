@@ -741,7 +741,7 @@ kubectl apply -f R-D/kiali/kiali-ingress.yaml
 ```
 <br>
 
-![alt text](img/image-11.png)
+![alt text](img/image-12.png)
 <br><br>
 
 ### Tempo
