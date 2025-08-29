@@ -241,7 +241,7 @@ kubectl exec -it svc/jenkins-service -n devops-tools -- cat /var/jenkins_home/se
 ```
 <br>
 
-<aside class="warning">💡 플러그인 관리 → kubernetes, slack notification 설치</aside><br>
+<aside class="warning">💡 플러그인 관리 → kubernetes, slack notification, prometheus metrics, CloudBees Disk Usage Simple 설치</aside><br>
 
 <aside class="warning">💡 시스템 설정 → GitHub Server, slack 연결</aside><br>
 
