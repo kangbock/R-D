@@ -666,6 +666,7 @@ kubectl apply -f R-D/prometheus/podmonitor/istio-envoy.yaml
 <br>
 
 **Jenkins (API Token 발급)**
+![alt text](img/image-28.png)
 ```
 kubectl apply -f R-D/prometheus/podmonitor/jenkins.yaml
 ```
