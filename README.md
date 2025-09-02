@@ -274,7 +274,6 @@ apiVersion: v1
 kind: Secret
 metadata:
   name: docker-config-secret
-  namespace: default
 data:
   .dockerconfigjson: 인코딩한 데이터
 type: kubernetes.io/dockerconfigjson
