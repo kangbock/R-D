@@ -146,7 +146,7 @@ kubectl get nodes --show-labels | grep linux
 
 **Cluster Issuer**
 ```
-kubectl apply -f cert-manager/.
+kubectl apply -f R-D/cert-manager/.
 ```
 <br>
 
