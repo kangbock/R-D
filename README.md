@@ -628,6 +628,7 @@ helm upgrade argocd argo/argo-cd -n argocd -f R-D/argocd/argocd-notification-val
 
 ### Prometheus Stack
 ```
+kubernetes create ns monitoring
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
 helm repo update
 git clone https://github.com/prometheus-community/helm-charts.git
@@ -689,7 +690,7 @@ kubectl apply -f R-D/prometheus/podmonitor/cert-manager.yaml
 ### Alertmanager
 **Prometheus Stack Update**
 ```
-helm upgrade --install kube-prometheus-stack prometheus-community/kube-prometheus-stack --debug -n monitoring -f R-D/alertmanger/alertmamager-values.yaml
+helm upgrade --install kube-prometheus-stack prometheus-community/kube-prometheus-stack --debug -n monitoring -f R-D/alertmanager/alertmanager-notification-values.yaml
 kubectl apply -f R-D/alertmanager/alertmanager-certificate.yaml
 kubectl apply -f R-D/alertmanager/alertmanager-ingress.yaml
 ```
