@@ -740,6 +740,7 @@ data:
 kubectl apply -f istio/samples/addons/kiali.yaml
 kubectl apply -f R-D/kiali/kiali-certificate.yaml
 kubectl apply -f R-D/kiali/kiali-ingress.yaml
+kubectl apply -f R-D/kiali/azure-mysql.yaml
 ```
 <br>
 
@@ -765,8 +766,18 @@ prometheus:
 ```
 <br>
 
+**prometheus 업그레이드**
+```
+helm upgrade --install kube-prometheus-stack prometheus-community/kube-prometheus-stack --debug --timeout 10m -n monitoring -f helm-charts/charts/kube-prometheus-stack/values.yaml
+```
+<br>
+
 **azure storage account secret**
 ```
+kubectl create ns observability
+helm repo add grafana https://grafana.github.io/helm-charts
+helm repo update
+
 kubectl -n observability create secret generic tempo-azure-credentials \
 --from-literal=STORAGE_ACCOUNT_ACCESS_KEY='<Azure_Storage_Account_Key>'
 ```
