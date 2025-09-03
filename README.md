@@ -973,9 +973,8 @@ helm upgrade -i tempo grafana/tempo-distributed -n observability --create-namesp
 ```
 helm repo add grafana https://grafana.github.io/helm-charts
 helm repo update
-
 git clone https://github.com/grafana/helm-charts.git grafana
-helm install loki grafana/loki --values values.yaml -n monitoring
+kubectl create ns loki
 ```
 <br>
 
@@ -994,7 +993,7 @@ helm install loki grafana/loki --values values.yaml -n monitoring
 
 **loki 배포**
 ```
-helm upgrade loki grafana/loki -f R-D/grafana/loki/loki-values.yaml -n loki --debug --wait --timeout 10m
+helm install loki grafana/loki -f R-D/grafana/loki/loki-values.yaml -n loki --debug --wait --timeout 10m
 ```
 <br>
 
@@ -1027,10 +1026,7 @@ kubectl apply -f R-D/grafana/loki/loki-datasource.yaml
 
 **Promtail 배포**
 ```
-kubectl apply -f R-D/grafana/promtail/promtail-values.yaml
-```
-```
-helm upgrade --install promtail grafana/promtail -n monitoring --debug -f promtail-values.yaml
+helm upgrade --install promtail grafana/promtail -n monitoring --debug -f R-D/grafana/promtail/promtail-values.yaml
 ```
 <br>
 
