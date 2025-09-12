@@ -3,7 +3,7 @@
 **기술 스택**
 | 영역 | 기술/도구 | 용도 및 특징 |
 | --- | --- | --- |
-| 인프라/환경 | Azure VM (Ubuntu 22.04), Azure CLI, AKS, Docker | Azure 구독에 서비스 프린시펄로 로그인, AKS 컨텍스트 연결, 로컬(또는 점프박스) Ubuntu 22.04에서 Docker/CLI 사용 |
+| 인프라/환경 | Azure VM (Ubuntu 22.04), Azure CLI, AKS, Docker | Azure 구독에 서비스 주체로 로그인, AKS 컨텍스트 연결, Ubuntu 22.04에서 Docker/AKS CLI 사용 |
 | 패키지/배포 | Helm | 쿠버네티스 앱 배포/관리(Helm 설치 스크립트 사용) |
 | 서비스 메시 | Istio | demo 프로필 설치, 네임스페이스 자동 사이드카 주입 |
 | 가시화(서비스 메시) | Kiali | 메시 토폴로지/트래픽 가시화 도구 |
