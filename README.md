@@ -13,9 +13,9 @@
 | CI | Jenkins | 쿠버네티스에 Jenkins 배포, 플러그인(kubernetes, slack) 사용 |
 | 이미지 빌드 | Kaniko | Docker 데몬 없이 K8s 내부에서 이미지 빌드, dockerconfig Secret 사용 |
 | CD/GitOps | Argo CD | Git 변경(YAML) 기반 자동 배포 플로우로 사용 |
-| 모니터링 | Prometheus | 메트릭 수집 및 Alert 발송(PLG 워크플로우) |
+| 모니터링 | Prometheus | 쿠버네티스 메트릭 수집 |
 | 알림 | Alertmanager | 경보 라우팅 및 통합 |
-| 대시보드 | Grafana | 관측 대시보드(PLG 구성 요소) |
+| 대시보드 | Grafana | 관측 대시보드 |
 | 로깅 | Grafana Loki | 로그 수집/분석 |
 | 알림 연계 | Slack | Jenkins, ArgoCD, Alertmanager 에서 Slack 알림 |
 | 참조 리포지토리 | `Terraform Basic` | 사전 작업으로 Terraform 인프라 코드 리포지토리 참조 |
