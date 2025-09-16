@@ -571,7 +571,7 @@ GitOps 기반 지속적 배포 관리
 ```
 helm repo add argo https://argoproj.github.io/argo-helm
 helm repo update
-kubernetes create ns argocd
+kubectl create ns argocd
 
 git clone https://github.com/argoproj/argo-helm.git
 helm install argocd argo/argo-cd -n argocd -f argo-helm/charts/argo-cd/values.yaml --debug
