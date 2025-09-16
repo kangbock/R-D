@@ -628,7 +628,7 @@ helm upgrade argocd argo/argo-cd -n argocd -f R-D/argocd/argocd-notification-val
 
 ### Prometheus Stack
 ```
-kubernetes create ns monitoring
+kubectl create ns monitoring
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
 helm repo update
 git clone https://github.com/prometheus-community/helm-charts.git
