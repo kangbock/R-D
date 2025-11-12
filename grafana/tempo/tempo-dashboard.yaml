@@ -14,7 +14,7 @@ data:
       "title": "Tempo Service Observability",
       "timezone": "browser",
       "schemaVersion": 39,
-      "version": 3,
+      "version": 7,
       "refresh": "30s",
       "time": { "from": "now-6h", "to": "now" },
 
@@ -40,6 +40,7 @@ data:
           {
             "type": "query",
             "name": "service",
+            "label": "service",
             "datasource": { "type": "prometheus", "uid": "prometheus" },
             "query": "label_values(traces_spanmetrics_calls_total{span_kind=\"SPAN_KIND_SERVER\", service=~\".*\\\\.${namespace}\"}, service)",
             "refresh": 2,
@@ -50,6 +51,7 @@ data:
           {
             "type": "query",
             "name": "client",
+            "label": "client (service-graph)",
             "datasource": { "type": "prometheus", "uid": "prometheus" },
             "query": "label_values(traces_service_graph_request_total{client=~\".*\\\\.${namespace}\"}, client)",
             "refresh": 2,
@@ -60,6 +62,7 @@ data:
           {
             "type": "query",
             "name": "server",
+            "label": "server (service-graph)",
             "datasource": { "type": "prometheus", "uid": "prometheus" },
             "query": "label_values(traces_service_graph_request_total{server=~\".*\\\\.${namespace}\"}, server)",
             "refresh": 2,
@@ -77,7 +80,7 @@ data:
           "gridPos": { "x": 0, "y": 0, "w": 6, "h": 5 },
           "targets": [
             {
-              "expr": "sum(rate(traces_spanmetrics_calls_total{span_kind=\"SPAN_KIND_SERVER\", service=~\"$service\", service=~\".*\\\\.${namespace}\"}[5m]))",
+              "expr": "sum(rate(traces_spanmetrics_calls_total{span_kind=\"SPAN_KIND_SERVER\", service=~\"$service\", service=~\".*\\\\.${namespace}\"}[$__rate_interval]))",
               "datasource": { "type": "prometheus", "uid": "prometheus" }
             }
           ],
@@ -86,15 +89,15 @@ data:
 
         {
           "type": "stat",
-          "title": "Error rate (%)",
+          "title": "Overhead (client − server) mean latency (ms)",
           "gridPos": { "x": 6, "y": 0, "w": 6, "h": 5 },
           "targets": [
             {
-              "expr": "100 * sum(rate(traces_spanmetrics_calls_total{span_kind=\"SPAN_KIND_SERVER\", status_code=\"STATUS_CODE_ERROR\", service=~\"$service\", service=~\".*\\\\.${namespace}\"}[5m])) / sum(rate(traces_spanmetrics_calls_total{span_kind=\"SPAN_KIND_SERVER\", service=~\"$service\", service=~\".*\\\\.${namespace}\"}[5m]))",
+              "expr": "1000 * ((sum(rate(traces_spanmetrics_latency_sum{span_kind=\"SPAN_KIND_CLIENT\", service=~\"$service\", service=~\".*\\\\.${namespace}\"}[$__rate_interval])) / clamp_min(sum(rate(traces_spanmetrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\", service=~\"$service\", service=~\".*\\\\.${namespace}\"}[$__rate_interval])), 1e-12)) - (sum(rate(traces_spanmetrics_latency_sum{span_kind=\"SPAN_KIND_SERVER\", service=~\"$service\", service=~\".*\\\\.${namespace}\"}[$__rate_interval])) / clamp_min(sum(rate(traces_spanmetrics_calls_total{span_kind=\"SPAN_KIND_SERVER\", service=~\"$service\", service=~\".*\\\\.${namespace}\"}[$__rate_interval])), 1e-12)))",
               "datasource": { "type": "prometheus", "uid": "prometheus" }
             }
           ],
-          "fieldConfig": { "defaults": { "unit": "percent" } }
+          "fieldConfig": { "defaults": { "unit": "ms" } }
         },
 
         {
@@ -119,15 +122,28 @@ data:
 
         {
           "type": "stat",
-          "title": "p95 latency (ms)",
-          "gridPos": { "x": 0, "y": 5, "w": 12, "h": 5 },
+          "title": "Server Error rate (%)",
+          "gridPos": { "x": 0, "y": 5, "w": 6, "h": 5 },
           "targets": [
             {
-              "expr": "1000 * histogram_quantile(0.95, sum by (le, service)(rate(traces_spanmetrics_latency_bucket{span_kind=\"SPAN_KIND_SERVER\", service=~\"$service\", service=~\".*\\\\.${namespace}\"}[5m])))",
+              "expr": "100 * ((sum(rate(traces_spanmetrics_calls_total{span_kind=\"SPAN_KIND_SERVER\", status_code=\"STATUS_CODE_ERROR\", service=~\"$service\", service=~\".*\\\\.${namespace}\"}[$__rate_interval])) ) or (0 * sum(rate(traces_spanmetrics_calls_total{span_kind=\"SPAN_KIND_SERVER\", service=~\"$service\", service=~\".*\\\\.${namespace}\"}[$__rate_interval])) )) / clamp_min(sum(rate(traces_spanmetrics_calls_total{span_kind=\"SPAN_KIND_SERVER\", service=~\"$service\", service=~\".*\\\\.${namespace}\"}[$__rate_interval])), 1e-12)",
               "datasource": { "type": "prometheus", "uid": "prometheus" }
             }
           ],
-          "fieldConfig": { "defaults": { "unit": "ms" } }
+          "fieldConfig": { "defaults": { "unit": "percent" } }
+        },
+
+        {
+          "type": "stat",
+          "title": "Client Error rate (%)",
+          "gridPos": { "x": 6, "y": 5, "w": 6, "h": 5 },
+          "targets": [
+            {
+              "expr": "100 * ((sum(rate(traces_spanmetrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\", status_code=\"STATUS_CODE_ERROR\", service=~\"$service\", service=~\".*\\\\.${namespace}\"}[$__rate_interval])) ) or (0 * sum(rate(traces_spanmetrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\", service=~\"$service\", service=~\".*\\\\.${namespace}\"}[$__rate_interval])) )) / clamp_min(sum(rate(traces_spanmetrics_calls_total{span_kind=\"SPAN_KIND_CLIENT\", service=~\"$service\", service=~\".*\\\\.${namespace}\"}[$__rate_interval])), 1e-12)",
+              "datasource": { "type": "prometheus", "uid": "prometheus" }
+            }
+          ],
+          "fieldConfig": { "defaults": { "unit": "percent" } }
         },
 
         {
@@ -136,7 +152,7 @@ data:
           "gridPos": { "x": 0, "y": 10, "w": 12, "h": 8 },
           "targets": [
             {
-              "expr": "sum by (service)(rate(traces_spanmetrics_calls_total{span_kind=\"SPAN_KIND_SERVER\", service=~\"$service\", service=~\".*\\\\.${namespace}\"}[5m]))",
+              "expr": "sum by (service)(rate(traces_spanmetrics_calls_total{span_kind=\"SPAN_KIND_SERVER\", service=~\"$service\", service=~\".*\\\\.${namespace}\"}[$__rate_interval]))",
               "datasource": { "type": "prometheus", "uid": "prometheus" }
             }
           ],
@@ -149,7 +165,33 @@ data:
           "gridPos": { "x": 12, "y": 10, "w": 12, "h": 8 },
           "targets": [
             {
-              "expr": "1000 * histogram_quantile(0.95, sum by (client, server, le)(rate(traces_service_graph_request_server_seconds_bucket{client=~\"$client\", server=~\"$server\", server=~\".*\\\\.${namespace}\"}[5m])))",
+              "expr": "1000 * histogram_quantile(0.95, sum by (client, server, le)(rate(traces_service_graph_request_server_seconds_bucket{client=~\"$client\", server=~\"$server\", server=~\".*\\\\.${namespace}\"}[$__rate_interval])))",
+              "datasource": { "type": "prometheus", "uid": "prometheus" }
+            }
+          ],
+          "fieldConfig": { "defaults": { "unit": "ms" } }
+        },
+
+        {
+          "type": "timeseries",
+          "title": "p95 latency (server)",
+          "gridPos": { "x": 0, "y": 18, "w": 24, "h": 8 },
+          "targets": [
+            {
+              "expr": "1000 * histogram_quantile(0.95, sum by (le, service)(rate(traces_spanmetrics_latency_bucket{span_kind=\"SPAN_KIND_SERVER\", service=~\"$service\", service=~\".*\\\\.${namespace}\"}[$__rate_interval])))",
+              "datasource": { "type": "prometheus", "uid": "prometheus" }
+            }
+          ],
+          "fieldConfig": { "defaults": { "unit": "ms" } }
+        },
+
+        {
+          "type": "timeseries",
+          "title": "p95 latency (client)",
+          "gridPos": { "x": 0, "y": 26, "w": 24, "h": 8 },
+          "targets": [
+            {
+              "expr": "1000 * histogram_quantile(0.95, sum by (le, service)(rate(traces_spanmetrics_latency_bucket{span_kind=\"SPAN_KIND_CLIENT\", service=~\"$service\", service=~\".*\\\\.${namespace}\"}[$__rate_interval])))",
               "datasource": { "type": "prometheus", "uid": "prometheus" }
             }
           ],
