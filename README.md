@@ -9,14 +9,15 @@
 | 가시화(서비스 메시) | Kiali | 메시 토폴로지/트래픽 가시화 도구 |
 | 인그레스 | ingress-nginx | Azure LB 헬스프루브 경로 어노테이션 포함하여 설치 |
 | 인증서 관리 | cert-manager (Let’s Encrypt) | ClusterIssuer/Secret 기반 인증서 자동화 |
-| 레지스트리 | Harbor | 프라이빗 레지스트리, NGINX Ingress + TLS(Secret/Issuer) 구성 |
-| CI | Jenkins | 쿠버네티스에 Jenkins 배포, 플러그인(kubernetes, slack) 사용 |
+| 레지스트리 | Harbor | 프라이빗 레지스트리 |
+| CI | Jenkins | Statefulset 배포, 플러그인(kubernetes, slack) 사용 |
 | 이미지 빌드 | Kaniko | Docker 데몬 없이 K8s 내부에서 이미지 빌드, dockerconfig Secret 사용 |
 | CD/GitOps | Argo CD | Git 변경(YAML) 기반 자동 배포 플로우로 사용 |
 | 모니터링 | Prometheus | 쿠버네티스 메트릭 수집 |
 | 알림 | Alertmanager | 경보 라우팅 및 통합 |
 | 대시보드 | Grafana | 관측 대시보드 |
 | 로깅 | Grafana Loki | 로그 수집/분석 |
+| 분산 트레이싱 백엔드 | Grafana Tempo | 레이턴시 모니터링, AKS + Istio 통합 |
 | 알림 연계 | Slack | Jenkins, ArgoCD, Alertmanager 에서 Slack 알림 |
 | 참조 리포지토리 | `Terraform Basic` | 사전 작업으로 Terraform 인프라 코드 리포지토리 참조 |
 | 애플리케이션 소스 | `msa_nginx`, `msa_deploy` | 이미지 빌드/배포 대상 리포지토리로 Jenkins 파이프라인에서 사용 |
