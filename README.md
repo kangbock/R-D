@@ -17,7 +17,7 @@
 | 알림 | Alertmanager | 경보 라우팅 및 통합 |
 | 대시보드 | Grafana | 관측 대시보드 |
 | 로깅 | Grafana Loki | 로그 수집/분석 |
-| 분산 트레이싱 백엔드 | Grafana Tempo | 레이턴시 모니터링, AKS + Istio 통합 |
+| 분산 트레이싱 백엔드 | Grafana Tempo | 레이턴시 모니터링 |
 | 알림 연계 | Slack | Jenkins, ArgoCD, Alertmanager 에서 Slack 알림 |
 | 참조 리포지토리 | `Terraform Basic` | 사전 작업으로 Terraform 인프라 코드 리포지토리 참조 |
 | 애플리케이션 소스 | `msa_nginx`, `msa_deploy` | 이미지 빌드/배포 대상 리포지토리로 Jenkins 파이프라인에서 사용 |
