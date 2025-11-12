@@ -20,6 +20,7 @@
 | 알림 연계 | Slack | Jenkins, ArgoCD, Alertmanager 에서 Slack 알림 |
 | 참조 리포지토리 | `Terraform Basic` | 사전 작업으로 Terraform 인프라 코드 리포지토리 참조 |
 | 애플리케이션 소스 | `msa_nginx`, `msa_deploy` | 이미지 빌드/배포 대상 리포지토리로 Jenkins 파이프라인에서 사용 |
+| 오토스케일링 | KEDA | 이벤트·메트릭 기반 오토스케일링(HPA 자동 생성·관리), Prometheus/HTTP/Cron 등 다양한 트리거 지원, Scale-to-Zero 가능 |
 <br>
 
 ## 사전 작업 - Terraform 인프라 구성
@@ -1039,4 +1040,15 @@ kubectl apply -f R-D/grafana/loki/loki-dashboard.yaml
 
 **Azure Storage Account**
 ![alt text](img/image-25.png)
+<br>
+
+## KEDA (Kubernetes Event-driven Autoscaling)
+### scaled object
+
+```
+kubectl apply -f R-D/keda/nginx-istio-rps.yaml
+```
+<br>
+
+![alt text](img/image-29.png)
 <br>

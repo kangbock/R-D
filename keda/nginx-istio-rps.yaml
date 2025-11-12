@@ -1,0 +1,25 @@
+# nginx-istio-rps.yaml
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: nginx-istio-rps
+  namespace: default
+spec:
+  scaleTargetRef:
+    name: nginx
+  minReplicaCount: 1
+  maxReplicaCount: 10
+  pollingInterval: 15
+  cooldownPeriod: 60
+  triggers:
+  - type: prometheus
+    metadata:
+      serverAddress: http://kube-prometheus-stack-prometheus.monitoring.svc.cluster.local:9090
+      query: |
+        sum(rate(istio_requests_total{
+          reporter="destination",
+          destination_workload="nginx",
+          destination_workload_namespace="default"
+        }[2m]))
+      threshold: "5"
+      activationThreshold: "0.5"
